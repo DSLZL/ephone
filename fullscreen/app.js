@@ -1,5 +1,17 @@
 
 
+// Lightweight, non-invasive performance hints
+(function(){
+  try {
+    document.addEventListener('DOMContentLoaded', function(){
+      var imgs = document.getElementsByTagName('img');
+      for (var i = 0; i < imgs.length; i++) {
+        if (!imgs[i].hasAttribute('decoding')) { imgs[i].decoding = 'async'; }
+      }
+    });
+  } catch (e) { /* no-op */ }
+})();
+
         const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models'
     // gemini如果是多个密钥, 那么随机获取一个
     function getRandomValue(str) {

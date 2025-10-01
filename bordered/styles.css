@@ -1,5 +1,5 @@
 
-        @font-face { font-family: 'bulangni'; src: url('') format('truetype'); font-weight: normal; font-style: normal; font-display: swap; }
+        @font-face { font-family: 'bulangni'; src: local('bulangni'); font-weight: normal; font-style: normal; font-display: swap; }
         :root { --screen-width: 350px; --screen-height: 650px; --secondary-bg: #ffffff; --border-color: #e0e0e0; --text-primary: #1f1f1f; --text-secondary: #8a8a8a; --accent-color: #007bff; }
         html { height: 100%; overflow: hidden; }
         body { height: 100%; overflow: hidden; margin: 0; padding: 20px; font-family: 'bulangni', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-weight: normal; background-color: #dcdcdc; display: flex; justify-content: center; align-items: center; box-sizing: border-box; }
@@ -39,6 +39,10 @@
         .app-icon:active .icon-bg { transform: scale(0.9); }
         .app-icon .icon-bg img { width: 100%; height: 100%; object-fit: cover; }
         .app-icon .label { color: white; }
+
+/* Performance hints: improve tap response and animation smoothness */
+.app-icon .icon-bg { will-change: transform; }
+button, .app-icon, .header .action-btn, .save-btn { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         .form-container, .list-container { padding: 20px; overflow-y: auto; flex-grow: 1; display:flex; flex-direction: column; }
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-secondary); }
