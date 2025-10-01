@@ -1,5 +1,5 @@
 
-        @font-face { font-family: 'bulangni'; src: url('') format('truetype'); font-weight: normal; font-style: normal; font-display: swap; }
+        @font-face { font-family: 'bulangni'; src: local('bulangni'); font-weight: normal; font-style: normal; font-display: swap; }
         :root { --screen-width: 350px; --screen-height: 650px; --secondary-bg: #ffffff; --border-color: #e0e0e0; --text-primary: #1f1f1f; --text-secondary: #8a8a8a; --accent-color: #007bff; }
         html { height: 100%; overflow: hidden; }
 
@@ -57,6 +57,9 @@ body {
 }
 
         .header .action-btn img { height: 26px; }
+        /* Performance hints: touch & animation smoothness */
+        .app-icon .icon-bg { will-change: transform; }
+        button, .app-icon, .header .action-btn, .save-btn { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         .header .save-btn { font-size: 16px; color: var(--accent-color); font-weight: 600; cursor: pointer; }
         #home-screen { display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding: 20px; padding-top: 80px; padding-bottom: 50px; box-sizing: border-box; background-size: cover; background-position: center; }
         #clock-container { text-align: center; color: white; text-shadow: 0 3px 8px rgba(0,0,0,0.4); margin-bottom: 20px; flex-shrink: 0; }
