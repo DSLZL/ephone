@@ -8549,7 +8549,11 @@ ${contextSummaryForApproval}
                         aiMessage = { ...baseMessage, type: 'sticker', content: msgData.url, meaning: msgData.meaning || '' };
                         break;
                     case 'ai_image':
-                        aiMessage = { ...baseMessage, type: 'ai_image', content: msgData.description };
+                        aiMessage = { 
+                            ...baseMessage, 
+                            type: 'ai_image', 
+                            content: msgData.description || msgData.content
+                        };
                         break;
                     case 'voice_message':
                         aiMessage = { ...baseMessage, type: 'voice_message', content: msgData.content };
@@ -9104,7 +9108,11 @@ ${contextSummaryForApproval}
                         aiMessage = { ...baseMessage, type: 'sticker', content: msgData.url, meaning: msgData.meaning || '' };
                         break;
                     case 'ai_image':
-                        aiMessage = { ...baseMessage, type: 'ai_image', content: msgData.description };
+                        aiMessage = { 
+                            ...baseMessage, 
+                            type: 'ai_image', 
+                            content: msgData.description || msgData.content // <-- 核心修改
+                        };
                         break;
                     case 'voice_message':
                         aiMessage = { ...baseMessage, type: 'voice_message', content: msgData.content };
