@@ -13394,9 +13394,23 @@ alert('API设置已保存!'); });
             if (!url || !key) return alert('请先填写反代地址和密钥');
             try {
 
-                let  isGemini = url === GEMINI_API_URL;
-                const response = await fetch(isGemini ? `${GEMINI_API_URL}?key=${getRandomValue(key)}` : `${url}/v1/models`,isGemini ? undefined : {headers: {'Authorization': `Bearer ${key}`}});
-                if (!response.ok) throw new Error('无法获取模型列表');
+                let isGemini = url === GEMINI_API_URL;
+                let response; // 声明 response 变量
+
+                if (isGemini) {
+                    // Gemini API 使用一个简单的 GET 请求，密钥在 URL 中
+                    response = await fetch(`${GEMINI_API_URL}?key=${getRandomValue(key)}`);
+                } else {
+                    // 对于 OpenAI 兼容的 API，我们明确地将方法设置为 GET
+                    response = await fetch(`${url}/v1/models`, {
+                        method: 'GET', // 核心修改：明确声明使用 GET 方法
+                        headers: {
+                            'Authorization': `Bearer ${key}`
+                        }
+                    });
+                }
+
+                if (!response.ok) throw new Error(`无法获取模型列表, 状态: ${response.status}`); // 添加了更具体的错误状态
                 const data = await response.json();
                 let models = isGemini ? data.models : data.data;
                 if(isGemini){
