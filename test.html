@@ -7585,7 +7585,35 @@ async function openChat(chatId) {
 }
 // ▲▲▲ 替换结束 ▲▲▲
 
-async function triggerAiResponse() {
+
+function handleWaitReplyClick() {
+    if (!state.activeChatId) return;
+
+    const chatInput = document.getElementById('chat-input');
+    const content = chatInput.value.trim();
+
+    // 如果用户已经输入了内容，则不执行任何操作
+    if (content) {
+        alert("您已输入内容，请点击“发送”按钮。");
+        return;
+    }
+
+    // 【核心修改】创建一条对用户隐藏的、模拟用户说话的消息
+    const continueMessage = {
+        role: 'user', // 角色是 'user'，就像用户自己发的一样
+        content: '你继续说', // 内容可以很简单，比如“然后呢？”、“继续”、“你继续说”
+        timestamp: Date.now(),
+        isHidden: true // 关键：这个标记会让这条消息不被渲染到聊天界面上
+    };
+
+    const chat = state.chats[state.activeChatId];
+    chat.history.push(continueMessage);
+            
+    // 直接触发AI响应，AI会把上面的隐藏消息作为最后一条用户输入来处理
+    triggerAiResponse();
+}
+
+async function triggerAiResponse(extraInstruction = null) {
     if (!state.activeChatId) return;
     const chatId = state.activeChatId;
     const chat = state.chats[state.activeChatId];
@@ -7720,6 +7748,7 @@ ${contextSummary || "（无有效对话记录）"}
         }
         let systemPrompt, messagesPayload;
         const maxMemory = parseInt(chat.settings.maxMemory) || 10;
+        chat.history = chat.history.filter(msg => !msg.isTemporary);
         const historySlice = chat.history.slice(-maxMemory);
 
         let timeContext = `\n- **当前时间**: ${currentTime}`;
@@ -7936,7 +7965,7 @@ ${worldBookContent}
 ${sharedContext} 
 现在，请根据以上规则和下面的对话历史，继续进行对话。`;
             messagesPayload = historySlice.map(msg => {
-                if (msg.isHidden) return null;
+                if (msg.isHidden && msg.content.startsWith('[系统提示')) return null;
                 if (msg.type === 'share_card') return null;
                 if (msg.role === 'assistant') {
                     let assistantMsgObject = { type: msg.type || 'text' };
@@ -8010,7 +8039,10 @@ ${contextSummaryForApproval}
                 };
                 messagesPayload.push(friendRequestInstruction);
             }            
-        }           
+        }
+        if (extraInstruction) {
+                    systemPrompt += `\n\n# 当前的紧急指令 (最高优先级)\n${extraInstruction}`;
+                }           
         const allRecentPosts = await db.qzonePosts.orderBy('timestamp').reverse().limit(5).toArray();
         const visiblePosts = filterVisiblePostsForAI(allRecentPosts, chat);
         if (visiblePosts.length > 0 && !chat.isGroup) {
@@ -13855,7 +13887,7 @@ document.getElementById('send-btn').addEventListener('click', async () => {
     // --- 【核心修改】发送后，取消引用模式 ---
     cancelReplyMode(); 
 });
-            document.getElementById('wait-reply-btn').addEventListener('click', triggerAiResponse);
+            document.getElementById('wait-reply-btn').addEventListener('click', handleWaitReplyClick);
             chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); document.getElementById('send-btn').click(); } });
             chatInput.addEventListener('input', () => { chatInput.style.height = 'auto'; chatInput.style.height = (chatInput.scrollHeight) + 'px'; });
 
