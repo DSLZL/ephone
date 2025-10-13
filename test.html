@@ -7601,7 +7601,7 @@ function handleWaitReplyClick() {
     // 【核心修改】创建一条对用户隐藏的、模拟用户说话的消息
     const continueMessage = {
         role: 'user', // 角色是 'user'，就像用户自己发的一样
-        content: '你继续说', // 内容可以很简单，比如“然后呢？”、“继续”、“你继续说”
+        content: '（system: 用户没有回复，请根据上文继续输出）', // 模擬用戶沉默or已讀不回，讓AI繼續輸出
         timestamp: Date.now(),
         isHidden: true // 关键：这个标记会让这条消息不被渲染到聊天界面上
     };
