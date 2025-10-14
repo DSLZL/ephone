@@ -254,19 +254,19 @@ let activePostId = null; // <-- 新增：用于存储当前操作的动态ID
 
 let simulationIntervalId = null;
 
-        const defaultAvatar = 'https://i.postimg.cc/PxZrFFFL/o-o-1.jpg';
-        const defaultMyGroupAvatar = 'https://i.postimg.cc/cLPP10Vm/4.jpg';
-        const defaultGroupMemberAvatar = 'https://i.postimg.cc/VkQfgzGJ/1.jpg';
-        const defaultGroupAvatar = 'https://i.postimg.cc/gc3QYCDy/1-NINE7-Five.jpg';
+        const defaultAvatar = 'img/Avatar.jpg';
+        const defaultMyGroupAvatar = 'img/MyGroupAvatar.jpg';
+        const defaultGroupMemberAvatar = 'img/GroupMemberAvatar.jpg';
+        const defaultGroupAvatar = 'img/GroupAvatar.jpg';
         let notificationTimeout;
 
 // ▼▼▼ 在JS顶部，变量定义区，添加这个新常量 ▼▼▼
 const DEFAULT_APP_ICONS = {
-    'world-book': 'https://i.postimg.cc/HWf1JKzn/IMG-6435.jpg',
-    'qq': 'https://i.postimg.cc/MTC3Tkw8/IMG-6436.jpg',
-    'api-settings': 'https://i.postimg.cc/MK8rJ8t7/IMG-6438.jpg',
-    'wallpaper': 'https://i.postimg.cc/T1j03pQr/IMG-6440.jpg',
-    'font': 'https://i.postimg.cc/pXxk1JXk/IMG-6442.jpg'
+    'world-book': 'img/World-Book.jpg',
+    'qq': 'img/QQ.jpg',
+    'api-settings': 'img/API.jpg',
+    'wallpaper': 'img/Wallpaper.jpg',
+    'font': 'img/Font.jpg'
 };
 // ▲▲▲ 添加结束 ▲▲▲
 
@@ -565,7 +565,7 @@ async function renderQzonePosts() {
             contentHtml = publicTextHtml ? `${publicTextHtml}<div style="margin-top:10px;"><img src="${post.imageUrl}" class="chat-image"></div>` : `<img src="${post.imageUrl}" class="chat-image">`;
         } 
         else if (post.type === 'text_image') {
-            contentHtml = publicTextHtml ? `${publicTextHtml}<div style="margin-top:10px;"><img src="https://i.postimg.cc/KYr2qRCK/1.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}"></div>` : `<img src="https://i.postimg.cc/KYr2qRCK/1.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}">`;
+            contentHtml = publicTextHtml ? `${publicTextHtml}<div style="margin-top:10px;"><img src=" img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}"></div>` : `<img src=" img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}">`;
         }
 
         let likesHtml = '';
@@ -705,7 +705,7 @@ function displayFilteredFavorites(items) {
             } else if (post.type === 'image_post' && post.imageUrl) {
                 contentHtml = publicTextHtml ? `${publicTextHtml}<div style="margin-top:10px;"><img src="${post.imageUrl}" class="chat-image"></div>` : `<img src="${post.imageUrl}" class="chat-image">`;
             } else if (post.type === 'text_image') {
-                contentHtml = publicTextHtml ? `${publicTextHtml}<div style="margin-top:10px;"><img src="https://i.postimg.cc/KYr2qRCK/1.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}"></div>` : `<img src="https://i.postimg.cc/KYr2qRCK/1.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}">`;
+                contentHtml = publicTextHtml ? `${publicTextHtml}<div style="margin-top:10px;"><img src=" img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}"></div>` : `<img src=" img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}">`;
             }
 
             // ▼▼▼ 新增/修改的代码开始 ▼▼▼
@@ -1730,7 +1730,7 @@ else if (msg.type === 'share_card') {
     else if (msg.type === 'user_photo' || msg.type === 'ai_image') {
         bubble.classList.add('is-ai-image');
         const altText = msg.type === 'user_photo' ? "用户描述的照片" : "AI生成的图片";
-        contentHtml = `<img src="https://i.postimg.cc/KYr2qRCK/1.jpg" class="ai-generated-image" alt="${altText}" data-description="${msg.content}">`;
+        contentHtml = `<img src=" img/Ai-Generated-Image.jpg" class="ai-generated-image" alt="${altText}" data-description="${msg.content}">`;
     } else if (msg.type === 'voice_message') {
     bubble.classList.add('is-voice-message');
     
@@ -3881,7 +3881,7 @@ function returnToChat() {
     closeMusicPlayerWithAnimation();
 }
 
-        function updateListenTogetherIcon(chatId, forceReset = false) { const iconImg = document.querySelector('#listen-together-btn img'); if(!iconImg) return; if(forceReset || !musicState.isActive || musicState.activeChatId !== chatId) { iconImg.src = 'https://i.postimg.cc/8kYShvrJ/90-UI-2.png'; iconImg.className = ''; return; } iconImg.src = 'https://i.postimg.cc/D0pq6qS2/E30078-DC-8-B99-4-C01-AFDA-74728-DBF7-BEA.png'; iconImg.classList.add('rotating'); if (musicState.isPlaying) iconImg.classList.remove('paused'); else iconImg.classList.add('paused'); }
+        function updateListenTogetherIcon(chatId, forceReset = false) { const iconImg = document.querySelector('#listen-together-btn img'); if(!iconImg) return; if(forceReset || !musicState.isActive || musicState.activeChatId !== chatId) { iconImg.src = 'img/.png'; iconImg.className = ''; return; } iconImg.src = 'img/Rotating.png'; iconImg.classList.add('rotating'); if (musicState.isPlaying) iconImg.classList.remove('paused'); else iconImg.classList.add('paused'); }
         window.updateListenTogetherIconProxy = updateListenTogetherIcon;
 
         function updatePlayerUI() { updateListenTogetherIcon(musicState.activeChatId); updateElapsedTimeDisplay(); const titleEl = document.getElementById('music-player-song-title'); const artistEl = document.getElementById('music-player-artist'); const playPauseBtn = document.getElementById('music-play-pause-btn'); if (musicState.currentIndex > -1 && musicState.playlist.length > 0) { const track = musicState.playlist[musicState.currentIndex]; titleEl.textContent = track.name; artistEl.textContent = track.artist; } else { titleEl.textContent = '请添加歌曲'; artistEl.textContent = '...'; } playPauseBtn.textContent = musicState.isPlaying ? '❚❚' : '▶'; }
@@ -4032,9 +4032,9 @@ async function addSongFromLocal(event) {
 
         function updateBatteryDisplay(battery) { const batteryContainer = document.getElementById('status-bar-battery'); const batteryLevelEl = batteryContainer.querySelector('.battery-level'); const batteryTextEl = batteryContainer.querySelector('.battery-text'); const level = Math.floor(battery.level * 100); batteryLevelEl.style.width = `${level}%`; batteryTextEl.textContent = `${level}%`; if (battery.charging) { batteryContainer.classList.add('charging'); } else { batteryContainer.classList.remove('charging'); } }
 
-        function handleBatteryChange(battery) { updateBatteryDisplay(battery); const level = battery.level; if (!battery.charging) { if (level <= 0.4 && lastKnownBatteryLevel > 0.4 && !alertFlags.hasShown40) { showBatteryAlert('https://i.postimg.cc/T2yKJ0DV/40.jpg', '有点饿了，可以去找充电器惹'); alertFlags.hasShown40 = true; } if (level <= 0.2 && lastKnownBatteryLevel > 0.2 && !alertFlags.hasShown20) { showBatteryAlert('https://i.postimg.cc/qB9zbKs9/20.jpg', '赶紧的充电，要饿死了'); alertFlags.hasShown20 = true; } if (level <= 0.1 && lastKnownBatteryLevel > 0.1 && !alertFlags.hasShown10) { showBatteryAlert('https://i.postimg.cc/ThMMVfW4/10.jpg', '已阵亡，还有30秒爆炸'); alertFlags.hasShown10 = true; } } if (level > 0.4) alertFlags.hasShown40 = false; if (level > 0.2) alertFlags.hasShown20 = false; if (level > 0.1) alertFlags.hasShown10 = false; lastKnownBatteryLevel = level; }
+        function handleBatteryChange(battery) { updateBatteryDisplay(battery); const level = battery.level; if (!battery.charging) { if (level <= 0.4 && lastKnownBatteryLevel > 0.4 && !alertFlags.hasShown40) { showBatteryAlert('img/Battery-Alert.jpg', '有点饿了，可以去找充电器惹'); alertFlags.hasShown40 = true; } if (level <= 0.2 && lastKnownBatteryLevel > 0.2 && !alertFlags.hasShown20) { showBatteryAlert('img/Battery-Alert2.jpg', '赶紧的充电，要饿死了'); alertFlags.hasShown20 = true; } if (level <= 0.1 && lastKnownBatteryLevel > 0.1 && !alertFlags.hasShown10) { showBatteryAlert('img/Battery-Alert3.jpg', '已阵亡，还有30秒爆炸'); alertFlags.hasShown10 = true; } } if (level > 0.4) alertFlags.hasShown40 = false; if (level > 0.2) alertFlags.hasShown20 = false; if (level > 0.1) alertFlags.hasShown10 = false; lastKnownBatteryLevel = level; }
 
-        async function initBatteryManager() { if ('getBattery' in navigator) { try { const battery = await navigator.getBattery(); lastKnownBatteryLevel = battery.level; handleBatteryChange(battery); battery.addEventListener('levelchange', () => handleBatteryChange(battery)); battery.addEventListener('chargingchange', () => { handleBatteryChange(battery); if (battery.charging) { showBatteryAlert('https://i.postimg.cc/3NDQ0dWG/image.jpg', '窝爱泥，电量吃饱饱'); } }); } catch (err) { console.error("无法获取电池信息:", err); document.querySelector('.battery-text').textContent = 'ᗜωᗜ'; } } else { console.log("浏览器不支持电池状态API。"); document.querySelector('.battery-text').textContent = 'ᗜωᗜ'; } }
+        async function initBatteryManager() { if ('getBattery' in navigator) { try { const battery = await navigator.getBattery(); lastKnownBatteryLevel = battery.level; handleBatteryChange(battery); battery.addEventListener('levelchange', () => handleBatteryChange(battery)); battery.addEventListener('chargingchange', () => { handleBatteryChange(battery); if (battery.charging) { showBatteryAlert('img/Battery-Alert4.jpg', '窝爱泥，电量吃饱饱'); } }); } catch (err) { console.error("无法获取电池信息:", err); document.querySelector('.battery-text').textContent = 'ᗜωᗜ'; } } else { console.log("浏览器不支持电池状态API。"); document.querySelector('.battery-text').textContent = 'ᗜωᗜ'; } }
 
         async function renderAlbumList() {
             const albumGrid = document.getElementById('album-grid-page');
@@ -8639,7 +8639,7 @@ document.getElementById('photos-grid-page').addEventListener('click', async (e) 
             
             if (album.coverUrl === deletedPhoto.url) {
                 const nextPhoto = await db.qzonePhotos.where('albumId').equals(state.activeAlbumId).first();
-                updateData.coverUrl = nextPhoto ? nextPhoto.url : 'https://i.postimg.cc/pT2xKzPz/album-cover-placeholder.png';
+                updateData.coverUrl = nextPhoto ? nextPhoto.url : 'img/Album-Cover-Placeholder.png';
             }
             
             await db.qzoneAlbums.update(state.activeAlbumId, updateData);
@@ -8674,7 +8674,7 @@ document.addEventListener('keydown', (e) => {
 
 // --- ↑↑↑ 复制到这里结束 ↑↑↑ ---
          
-document.getElementById('create-album-btn-page').addEventListener('click', async () => { const albumName = await showCustomPrompt("创建新相册", "请输入相册名称"); if (albumName && albumName.trim()) { const newAlbum = { name: albumName.trim(), coverUrl: 'https://i.postimg.cc/pT2xKzPz/album-cover-placeholder.png', photoCount: 0, createdAt: Date.now() }; await db.qzoneAlbums.add(newAlbum); await renderAlbumList(); alert(`相册 "${albumName}" 创建成功！`); } else if (albumName !== null) { alert("相册名称不能为空！"); } });
+document.getElementById('create-album-btn-page').addEventListener('click', async () => { const albumName = await showCustomPrompt("创建新相册", "请输入相册名称"); if (albumName && albumName.trim()) { const newAlbum = { name: albumName.trim(), coverUrl: 'img/Album-Cover-Placeholder.png', photoCount: 0, createdAt: Date.now() }; await db.qzoneAlbums.add(newAlbum); await renderAlbumList(); alert(`相册 "${albumName}" 创建成功！`); } else if (albumName !== null) { alert("相册名称不能为空！"); } });
 
             document.getElementById('cancel-create-post-btn').addEventListener('click', () => document.getElementById('create-post-modal').classList.remove('visible'));
             document.getElementById('post-upload-local-btn').addEventListener('click', () => document.getElementById('post-local-image-input').click());
