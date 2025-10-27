@@ -685,8 +685,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       postEl.innerHTML = `
             <div class="post-header"><img src="${authorAvatar}" class="post-avatar"><div class="post-info"><span class="post-nickname">${authorNickname}</span><span class="post-timestamp">${formatPostTimestamp(
-        post.timestamp
-      )}</span></div>
+              post.timestamp
+            )}</span></div>
                 <div class="post-actions-btn">…</div>
             </div>
             <div class="post-main-content">${contentHtml}</div>
@@ -1087,9 +1087,8 @@ document.addEventListener("DOMContentLoaded", () => {
       previewStyle.id = "preview-font-style";
       previewStyle.innerHTML = newStyle;
       if (!document.getElementById("preview-font-style")) document.head.appendChild(previewStyle);
-      document.getElementById(
-        "font-preview"
-      ).style.fontFamily = `'${fontName}', 'bulangni', sans-serif`;
+      document.getElementById("font-preview").style.fontFamily =
+        `'${fontName}', 'bulangni', sans-serif`;
     } else {
       dynamicFontStyle.innerHTML = `
                     ${newStyle}
@@ -1669,8 +1668,8 @@ document.addEventListener("DOMContentLoaded", () => {
     chatScreen.style.backgroundColor = chat.settings.background
       ? "transparent"
       : isDarkMode
-      ? "#000000"
-      : "#f0f2f5";
+        ? "#000000"
+        : "#f0f2f5";
     const history = chat.history;
     const totalMessages = history.length;
     currentRenderedCount = 0;
@@ -2324,8 +2323,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       contentHtml = `
         <div class="poll-card ${msg.isClosed ? "closed" : ""}" data-poll-timestamp="${
-        msg.timestamp
-      }">
+          msg.timestamp
+        }">
             <div class="poll-question">${msg.question}</div>
             ${optionsHtml}
             ${footerHtml}
@@ -2788,8 +2787,8 @@ document.addEventListener("DOMContentLoaded", () => {
             typeof msgData.options === "string"
               ? msgData.options.split("\n").filter((opt) => opt.trim())
               : Array.isArray(msgData.options)
-              ? msgData.options
-              : [];
+                ? msgData.options
+                : [];
           if (pollOptions.length < 2) continue;
           aiMessage = {
             ...baseMessage,
@@ -4081,8 +4080,8 @@ ${contextSummaryForApproval}
                   typeof msgData.options === "string"
                     ? msgData.options.split("\n").filter((opt) => opt.trim())
                     : Array.isArray(msgData.options)
-                    ? msgData.options
-                    : [];
+                      ? msgData.options
+                      : [];
                 if (pollOptions.length < 2) continue;
                 aiMessage = {
                   ...baseMessage,
@@ -7075,9 +7074,8 @@ ${worldBookContent} // <--【核心】在这里注入世界书内容
       document.getElementById("caller-avatar").src =
         chat.settings.groupAvatar || defaultGroupAvatar;
       document.getElementById("caller-name").textContent = chat.name; // 显示群名
-      document.querySelector(
-        ".incoming-call-content .caller-text"
-      ).textContent = `${requesterName} 邀请你加入群视频`; // 显示具体发起人
+      document.querySelector(".incoming-call-content .caller-text").textContent =
+        `${requesterName} 邀请你加入群视频`; // 显示具体发起人
     } else {
       // 单聊逻辑保持不变
       document.getElementById("caller-avatar").src = chat.settings.aiAvatar || defaultAvatar;
@@ -8236,8 +8234,8 @@ ${contextSummary}
         resultsHtml += `
                 <div style="margin-bottom: 15px;">
                     <p style="font-weight: 500; margin: 0 0 5px 0;">${option} (${
-          voters.length
-        }票)</p>
+                      voters.length
+                    }票)</p>
                     <p style="font-size: 13px; color: #555; margin: 0; line-height: 1.5;">
                         ${voters.length > 0 ? voters.join("、 ") : "无人投票"}
                     </p>
@@ -9734,8 +9732,8 @@ ${contextSummary}
           header.innerHTML = `
             <span class="arrow">▼</span>
             <input type="checkbox" class="wb-category-checkbox" data-category-id="${category.id}" ${
-            allInCategoryChecked ? "checked" : ""
-          }>
+              allInCategoryChecked ? "checked" : ""
+            }>
             <span>${category.name}</span>
         `;
 
@@ -10756,9 +10754,8 @@ ${contextSummary}
         let translation = diffX;
         if (translation > 0) translation = 0;
         if (translation < -90) translation = -90;
-        swipeState.activeContainer.querySelector(
-          ".qzone-post-item"
-        ).style.transform = `translateX(${translation}px)`;
+        swipeState.activeContainer.querySelector(".qzone-post-item").style.transform =
+          `translateX(${translation}px)`;
       }
     };
 
@@ -11156,9 +11153,8 @@ ${contextSummary}
       }
 
       // 更新底部删除按钮的计数
-      document.getElementById(
-        "favorites-delete-selected-btn"
-      ).textContent = `删除 (${selectedFavorites.size})`;
+      document.getElementById("favorites-delete-selected-btn").textContent =
+        `删除 (${selectedFavorites.size})`;
     });
 
     // ▼▼▼ 将它【完整替换】为下面这段修正后的代码 ▼▼▼
