@@ -267,7 +267,7 @@ document.addEventListener("DOMContentLoaded", () => {
     chats: {},
     activeChatId: null,
     globalSettings: {},
-    apiConfig: {},
+    apiConfigs: [],
     userStickers: [],
     worldBooks: [],
     personaPresets: [],
@@ -447,24 +447,52 @@ document.addEventListener("DOMContentLoaded", () => {
   // 2. 数据库结构定义
   // ===================================================================
 
-  db.version(23).stores({
-    chats: "&id, isGroup, groupId",
-    apiConfig: "&id",
-    globalSettings: "&id",
-    userStickers: "&id, url, name",
-    worldBooks: "&id, name, categoryId", // <-- 【核心修改1】在这里添加 categoryId
-    worldBookCategories: "++id, name", // <-- 【核心修改2】新增这个表
-    musicLibrary: "&id",
-    personaPresets: "&id",
-    qzoneSettings: "&id",
-    qzonePosts: "++id, timestamp",
-    qzoneAlbums: "++id, name, createdAt",
-    qzonePhotos: "++id, albumId",
-    favorites: "++id, type, timestamp, originalTimestamp",
-    qzoneGroups: "++id, name",
-    memories: "++id, chatId, timestamp, type, targetDate",
-    callRecords: "++id, chatId, timestamp, customName", // <--【核心修改】在这里加上 customName
-  });
+  db.version(24)
+    .stores({
+      chats: "&id, isGroup, groupId",
+      // apiConfig: "&id", // <- 移除旧表
+      apiConfigs: "++id, name", // <- 新增，用于存储多个API配置
+      globalSettings: "&id",
+      userStickers: "&id, url, name",
+      worldBooks: "&id, name, categoryId",
+      worldBookCategories: "++id, name",
+      musicLibrary: "&id",
+      personaPresets: "&id",
+      qzoneSettings: "&id",
+      qzonePosts: "++id, timestamp",
+      qzoneAlbums: "++id, name, createdAt",
+      qzonePhotos: "++id, albumId",
+      favorites: "++id, type, timestamp, originalTimestamp",
+      qzoneGroups: "++id, name",
+      memories: "++id, chatId, timestamp, type, targetDate",
+      callRecords: "++id, chatId, timestamp, customName",
+    })
+    .upgrade(async (tx) => {
+      // 数据迁移脚本：从旧的单个 apiConfig 迁移到新的 apiConfigs 列表
+      const oldConfig = await tx.table("apiConfig").get("main");
+      if (oldConfig) {
+        console.log("检测到旧版API配置，正在执行自动迁移...");
+        const newConfigsTable = tx.table("apiConfigs");
+        const existingConfigs = await newConfigsTable.toArray();
+        if (existingConfigs.length === 0) {
+          const newId = await newConfigsTable.add({
+            name: "默认配置",
+            url: oldConfig.proxyUrl || "",
+            apiKey: oldConfig.apiKey || "",
+            model: oldConfig.model || "",
+            enableStream: oldConfig.enableStream || false,
+            hideStreamResponse: oldConfig.hideStreamResponse || false,
+          });
+
+          const globalSettings = (await tx.table("globalSettings").get("main")) || { id: "main" };
+          globalSettings.activeApiConfigId = newId;
+          await tx.table("globalSettings").put(globalSettings);
+
+          await tx.table("apiConfig").clear();
+          console.log("API配置迁移成功！");
+        }
+      }
+    });
 
   // ===================================================================
   // 3. 所有功能函数定义
@@ -950,7 +978,7 @@ document.addEventListener("DOMContentLoaded", () => {
         chats,
         worldBooks,
         userStickers,
-        apiConfig,
+        apiConfigs,
         globalSettings,
         personaPresets,
         musicLibrary,
@@ -966,7 +994,7 @@ document.addEventListener("DOMContentLoaded", () => {
         db.chats.toArray(),
         db.worldBooks.toArray(),
         db.userStickers.toArray(),
-        db.apiConfig.get("main"),
+        db.apiConfigs.toArray(),
         db.globalSettings.get("main"),
         db.personaPresets.toArray(),
         db.musicLibrary.get("main"),
@@ -984,7 +1012,7 @@ document.addEventListener("DOMContentLoaded", () => {
         chats,
         worldBooks,
         userStickers,
-        apiConfig,
+        apiConfigs,
         globalSettings,
         personaPresets,
         musicLibrary,
@@ -1038,6 +1066,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (Array.isArray(data.chats)) await db.chats.bulkPut(data.chats);
+        if (Array.isArray(data.apiConfigs)) await db.apiConfigs.bulkPut(data.apiConfigs);
         if (Array.isArray(data.worldBooks)) await db.worldBooks.bulkPut(data.worldBooks);
         if (Array.isArray(data.worldBookCategories))
           await db.worldBookCategories.bulkPut(data.worldBookCategories);
@@ -1051,7 +1080,14 @@ document.addEventListener("DOMContentLoaded", () => {
         if (Array.isArray(data.qzoneGroups)) await db.qzoneGroups.bulkPut(data.qzoneGroups);
         if (Array.isArray(data.memories)) await db.memories.bulkPut(data.memories); // 【核心修正】新增
 
-        if (data.apiConfig) await db.apiConfig.put(data.apiConfig);
+        if (data.apiConfig) {
+          await db.apiConfigs.put({
+            name: "旧的默认配置",
+            url: data.apiConfig.proxyUrl,
+            apiKey: data.apiConfig.apiKey,
+            model: data.apiConfig.model,
+          });
+        }
         if (data.globalSettings) await db.globalSettings.put(data.globalSettings);
         if (data.musicLibrary) await db.musicLibrary.put(data.musicLibrary);
         if (data.qzoneSettings) await db.qzoneSettings.put(data.qzoneSettings);
@@ -1109,27 +1145,26 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function loadAllDataFromDB() {
-    // ▼▼▼ 【核心修改在这里】 ▼▼▼
     const [
       chatsArr,
-      apiConfig,
+      apiConfigs, // <-- 修改这里
       globalSettings,
       userStickers,
       worldBooks,
       musicLib,
       personaPresets,
       qzoneSettings,
-      initialFavorites, // 将 initialFavorites 加入到解构赋值中
+      initialFavorites,
     ] = await Promise.all([
       db.chats.toArray(),
-      db.apiConfig.get("main"),
+      db.apiConfigs.toArray(), // <-- 修改这里
       db.globalSettings.get("main"),
       db.userStickers.toArray(),
       db.worldBooks.toArray(),
       db.musicLibrary.get("main"),
       db.personaPresets.toArray(),
       db.qzoneSettings.get("main"),
-      db.favorites.orderBy("timestamp").reverse().toArray(), // 确保这一行在 Promise.all 的数组参数内
+      db.favorites.orderBy("timestamp").reverse().toArray(),
     ]);
     // ▲▲▲ 【修改结束】 ▲▲▲
 
@@ -1196,13 +1231,7 @@ document.addEventListener("DOMContentLoaded", () => {
       acc[chat.id] = chat;
       return acc;
     }, {});
-    state.apiConfig = apiConfig || {
-      id: "main",
-      proxyUrl: "",
-      apiKey: "",
-      model: "",
-      enableStream: false,
-    };
+    state.apiConfigs = apiConfigs || [];
 
     state.globalSettings = globalSettings || {
       id: "main",
@@ -1340,18 +1369,125 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function renderApiSettings() {
-    document.getElementById("proxy-url").value = state.apiConfig.proxyUrl || "";
-    document.getElementById("api-key").value = state.apiConfig.apiKey || "";
-    // ▼▼▼ 新增这行 ▼▼▼
+    // 渲染其他全局设置（保持不变）
     document.getElementById("background-activity-switch").checked =
       state.globalSettings.enableBackgroundActivity || false;
     document.getElementById("background-interval-input").value =
       state.globalSettings.backgroundActivityInterval || 60;
     document.getElementById("block-cooldown-input").value =
       state.globalSettings.blockCooldownHours || 1;
-    document.getElementById("stream-switch").checked = state.apiConfig.enableStream || false;
-    document.getElementById("hide-stream-switch").checked =
-      state.apiConfig.hideStreamResponse || false;
+
+    // 渲染API配置列表
+    const listEl = document.getElementById("api-configs-list");
+    listEl.innerHTML = "";
+    if (state.apiConfigs.length === 0) {
+      listEl.innerHTML =
+        '<p style="text-align:center; color: var(--text-secondary);">还没有任何配置，请点击“添加”创建一个</p>';
+    }
+
+    const activeId = state.globalSettings.activeApiConfigId;
+
+    state.apiConfigs.forEach((config) => {
+      const item = document.createElement("div");
+      item.className = "api-config-item";
+      item.dataset.configId = config.id;
+      item.innerHTML = `
+        <div class="config-main">
+            <input type="radio" name="active_api_config" ${config.id === activeId ? "checked" : ""}>
+            <div class="config-details">
+                <span class="config-name">${config.name}</span>
+                <span class="config-url">${config.url || "URL未设置"}</span>
+            </div>
+        </div>
+        <div class="config-actions">
+            <button type="button" class="edit-btn">编辑</button>
+            <button type="button" class="delete-btn">删除</button>
+        </div>
+      `;
+      listEl.appendChild(item);
+    });
+  }
+// ▼▼▼ [新版本] 请使用此函数进行替换 ▼▼▼
+async function openApiConfigEditor(configId = null) {
+  let config = {
+    name: "",
+    url: "",
+    apiKey: "",
+    model: "gpt-4o",
+    enableStream: true,
+    hideStreamResponse: false,
+  };
+  if (configId) {
+    config = state.apiConfigs.find((c) => c.id === configId) || config;
+  }
+
+  // 填充基本信息
+  document.getElementById("config-editor-id").value = configId || "";
+  document.getElementById("config-name-input").value = config.name;
+  document.getElementById("config-url-input").value = config.url;
+  document.getElementById("config-key-input").value = config.apiKey;
+  
+  // --- 【核心修复】 ---
+  // 每次打开时，都重置模型下拉列表，只显示当前配置已保存的模型
+  const modelSelect = document.getElementById("config-model-select");
+  // 1. 清空所有旧的 <option> 元素
+  modelSelect.innerHTML = "";
+  // 2. 创建一个只包含当前已保存模型的新 <option>
+  const savedModelOption = document.createElement("option");
+  savedModelOption.value = config.model;
+  savedModelOption.textContent = config.model;
+  savedModelOption.selected = true;
+  // 3. 将这个唯一的选项添加到下拉列表中
+  modelSelect.appendChild(savedModelOption);
+  // --- 【修复结束】 ---
+
+  // 填充开关状态
+  document.getElementById("config-stream-switch").checked = config.enableStream;
+  document.getElementById("config-hide-stream-switch").checked = config.hideStreamResponse;
+
+  // 显示模态框
+  document.getElementById("api-config-editor-modal").classList.add("visible");
+}
+// ▲▲▲ 替换结束 ▲▲▲
+
+  async function saveApiConfig() {
+    const id = document.getElementById("config-editor-id").value;
+    const configData = {
+      name: document.getElementById("config-name-input").value.trim() || "未命名配置",
+      url: document.getElementById("config-url-input").value.trim(),
+      apiKey: document.getElementById("config-key-input").value.trim(),
+      model: document.getElementById("config-model-select").value,
+      enableStream: document.getElementById("config-stream-switch").checked,
+      hideStreamResponse: document.getElementById("config-hide-stream-switch").checked,
+    };
+
+    if (id) {
+      // 更新
+      configData.id = parseInt(id);
+      await db.apiConfigs.put(configData);
+      const index = state.apiConfigs.findIndex((c) => c.id === configData.id);
+      if (index > -1) state.apiConfigs[index] = configData;
+    } else {
+      // 新增
+      const newId = await db.apiConfigs.add(configData);
+      configData.id = newId;
+      state.apiConfigs.push(configData);
+      // 如果是第一个配置，自动设为激活
+      if (state.apiConfigs.length === 1) {
+        state.globalSettings.activeApiConfigId = newId;
+        await db.globalSettings.put(state.globalSettings);
+      }
+    }
+
+    renderApiSettings();
+    document.getElementById("api-config-editor-modal").classList.remove("visible");
+  }
+
+  async function setActiveApiConfig(configId) {
+    state.globalSettings.activeApiConfigId = configId;
+    await db.globalSettings.put(state.globalSettings);
+    // 可以在这里给一个轻量提示，或者什么都不做
+    console.log(`Active API config set to ID: ${configId}`);
   }
   window.renderApiSettingsProxy = renderApiSettings;
 
@@ -3163,9 +3299,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      const { proxyUrl, apiKey, model, enableStream } = state.apiConfig;
-      if (!proxyUrl || !apiKey || !model) {
-        alert("请先在API设置中配置反代地址、密钥并选择模型。");
+      // ▼▼▼ 从这里开始替换 ▼▼▼
+      const activeConfigId = state.globalSettings.activeApiConfigId;
+      const activeConfig = state.apiConfigs.find((c) => c.id === activeConfigId);
+
+      if (!activeConfig || !activeConfig.url || !activeConfig.apiKey || !activeConfig.model) {
+        alert("请先在API设置中添加并激活一个有效的API配置。");
+        // 恢复UI状态
         if (chat.isGroup) {
           if (typingIndicator) typingIndicator.style.display = "none";
         } else {
@@ -3176,6 +3316,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         return;
       }
+
+      const { url: proxyUrl, apiKey, model, enableStream } = activeConfig;
 
       if (!chat.isGroup && chat.relationship?.status === "pending_ai_approval") {
         console.log(`为角色 "${chat.name}" 触发带理由的好友申请决策流程...`);
@@ -3714,7 +3856,8 @@ ${contextSummaryForApproval}
         let fullResponseContent = "";
 
         // 【核心逻辑分支】
-        if (state.apiConfig.hideStreamResponse) {
+        if (activeConfig.hideStreamResponse) {
+          // <--- 核心修正点在这里
           // 模式一：隐藏流式响应（在后台接收，完成后一次性处理）
           while (true) {
             const { value, done } = await reader.read();
@@ -9185,6 +9328,68 @@ ${contextSummary}
 
   // ▲▲▲ 新函数粘贴结束 ▲▲▲
 
+  // ▼▼▼ 在此处粘贴新函数 ▼▼▼
+  /**
+   * 从用户指定的API端点获取模型列表并填充到下拉框中
+   */
+  async function fetchModels() {
+    const fetchBtn = document.getElementById("config-fetch-models-btn");
+    const urlInput = document.getElementById("config-url-input");
+    const keyInput = document.getElementById("config-key-input");
+    const selectEl = document.getElementById("config-model-select");
+
+    const apiUrl = urlInput.value.trim();
+    const apiKey = keyInput.value.trim();
+
+    if (!apiUrl || !apiKey) {
+      alert("请先填写有效的反代地址和密钥！");
+      return;
+    }
+
+    const originalText = fetchBtn.textContent;
+    fetchBtn.disabled = true;
+    fetchBtn.textContent = "正在拉取...";
+
+    try {
+      const response = await fetch(`${apiUrl}/v1/models`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`API错误 (${response.status}): ${errorData.error?.message || "未知错误"}`);
+      }
+
+      const data = await response.json();
+      const models = data.data; // 通常模型列表在 'data' 字段下
+
+      if (!Array.isArray(models) || models.length === 0) {
+        throw new Error("API返回的数据中未找到有效的模型列表。");
+      }
+
+      selectEl.innerHTML = ""; // 清空现有选项
+      models.forEach((model) => {
+        const option = document.createElement("option");
+        option.value = model.id;
+        option.textContent = model.id;
+        selectEl.appendChild(option);
+      });
+
+      alert(`成功拉取到 ${models.length} 个模型！`);
+    } catch (error) {
+      console.error("拉取模型列表失败:", error);
+      alert(`拉取模型列表失败：\n${error.message}\n\n请检查反代地址、密钥以及网络连接是否正确。`);
+    } finally {
+      fetchBtn.disabled = false;
+      fetchBtn.textContent = originalText;
+    }
+  }
+  // ▲▲▲ 新函数粘贴结束 ▲▲▲
+
   // ===================================================================
   // 4. 初始化函数 init()
   // ===================================================================
@@ -9377,6 +9582,48 @@ ${contextSummary}
     Object.entries(simpleEvents).forEach(([id, handler]) => {
       $(id)?.addEventListener("click", handler);
     });
+
+    $("add-new-config-btn").addEventListener("click", () => openApiConfigEditor());
+
+    $("api-configs-list").addEventListener("click", async (e) => {
+      const target = e.target;
+      const item = target.closest(".api-config-item");
+      if (!item) return;
+
+      const configId = parseInt(item.dataset.configId);
+
+      if (target.matches('input[type="radio"]')) {
+        await setActiveApiConfig(configId);
+      } else if (target.classList.contains("edit-btn")) {
+        openApiConfigEditor(configId);
+      } else if (target.classList.contains("delete-btn")) {
+        const config = state.apiConfigs.find((c) => c.id === configId);
+        const confirmed = await showCustomConfirm(
+          "删除确认",
+          `确定要删除配置 "${config.name}" 吗？`,
+          { confirmButtonClass: "btn-danger" }
+        );
+        if (confirmed) {
+          await db.apiConfigs.delete(configId);
+          state.apiConfigs = state.apiConfigs.filter((c) => c.id !== configId);
+          if (state.globalSettings.activeApiConfigId === configId) {
+            state.globalSettings.activeApiConfigId = state.apiConfigs[0]?.id || null;
+            await db.globalSettings.put(state.globalSettings);
+          }
+          renderApiSettings();
+        }
+      }
+    });
+
+    // ▼▼▼ 在这行下面添加新代码 ▼▼▼
+    $("config-fetch-models-btn").addEventListener("click", fetchModels);
+    // ▲▲▲ 添加结束 ▲▲▲
+
+    $("cancel-config-editor-btn").addEventListener("click", () => {
+      document.getElementById("api-config-editor-modal").classList.remove("visible");
+    });
+
+    $("save-config-btn").addEventListener("click", saveApiConfig);
 
     // ==================== 模态框覆盖层点击 ====================
     $("custom-modal-overlay").addEventListener("click", (e) => {
@@ -9603,107 +9850,6 @@ ${contextSummary}
       applyAppIcons();
       alert("外观设置已保存并应用！");
       showScreen("home-screen");
-    });
-
-    // ==================== API设置保存 ====================
-    $("save-api-settings-btn").addEventListener("click", async () => {
-      Object.assign(state.apiConfig, {
-        proxyUrl: $("proxy-url").value.trim(),
-        apiKey: $("api-key").value.trim(),
-        model: $("model-select").value,
-        enableStream: $("stream-switch").checked,
-        hideStreamResponse: $("hide-stream-switch").checked,
-      });
-      await db.apiConfig.put(state.apiConfig);
-
-      const bgSwitch = $("background-activity-switch");
-      const newEnableState = bgSwitch.checked;
-      const oldEnableState = state.globalSettings.enableBackgroundActivity || false;
-
-      if (newEnableState && !oldEnableState) {
-        const confirmed = confirm(
-          "【高费用警告】\n\n" +
-            "您正在启用“后台角色活动”功能。\n\n" +
-            "这会使您的AI角色们在您不和他们聊天时，也能“独立思考”并主动给您发消息或进行社交互动，极大地增强沉浸感。\n\n" +
-            "但请注意：\n" +
-            "这会【在后台自动、定期地调用API】，即使您不进行任何操作。根据您的角色数量和检测间隔，这可能会导致您的API费用显著增加。\n\n" +
-            "您确定要开启吗？"
-        );
-        if (!confirmed) {
-          bgSwitch.checked = false;
-          return;
-        }
-      }
-
-      Object.assign(state.globalSettings, {
-        enableBackgroundActivity: newEnableState,
-        backgroundActivityInterval: parseInt($("background-interval-input").value) || 60,
-        blockCooldownHours: parseFloat($("block-cooldown-input").value) || 1,
-      });
-      await db.globalSettings.put(state.globalSettings);
-
-      stopBackgroundSimulation();
-      if (newEnableState) {
-        startBackgroundSimulation();
-        console.log(
-          `后台活动模拟已启动，间隔: ${state.globalSettings.backgroundActivityInterval}秒`
-        );
-      } else {
-        console.log("后台活动模拟已停止。");
-      }
-
-      alert("API设置已保存!");
-    });
-
-    // ==================== API密钥显示切换 ====================
-    const apiKeyInput = $("api-key");
-    apiKeyInput.addEventListener("focus", (e) => e.target.setAttribute("type", "text"));
-    apiKeyInput.addEventListener("blur", (e) => e.target.setAttribute("type", "password"));
-
-    // ==================== 获取模型列表 ====================
-    $("fetch-models-btn").addEventListener("click", async () => {
-      const url = $("proxy-url").value.trim();
-      const key = $("api-key").value.trim();
-      if (!url || !key) return alert("请先填写反代地址和密钥");
-
-      try {
-        const isGemini = url === GEMINI_API_URL;
-        let response;
-
-        if (isGemini) {
-          response = await fetch(`${GEMINI_API_URL}?key=${getRandomValue(key)}`);
-        } else {
-          response = await fetch(`${url}/v1/models`, {
-            method: "GET",
-            headers: { Authorization: `Bearer ${key}` },
-          });
-        }
-
-        if (!response.ok) throw new Error(`无法获取模型列表, 状态: ${response.status}`);
-
-        const data = await response.json();
-        let models = isGemini ? data.models : data.data;
-
-        if (isGemini) {
-          models = models.map((model) => {
-            const parts = model.name.split("/");
-            return { id: parts.length > 1 ? parts[1] : model.name };
-          });
-        }
-
-        const modelSelect = $("model-select");
-        modelSelect.innerHTML = "";
-        models.forEach((model) => {
-          const option = document.createElement("option");
-          option.value = model.id;
-          option.textContent = model.id;
-          if (model.id === state.apiConfig.model) option.selected = true;
-          modelSelect.appendChild(option);
-        });
-        alert("模型列表已更新");
-      } catch (error) {
-        alert(`拉取模型失败: ${error.message}`);
-      }
     });
 
     // ==================== 世界书管理 ====================
