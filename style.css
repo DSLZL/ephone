@@ -850,3 +850,200 @@ button.action-btn svg { width: 24px; height: 24px; }
 .api-config-item .config-actions button { padding: 5px 10px; font-size: 12px; border-radius: 5px; cursor: pointer; border: 1px solid transparent; }
 .api-config-item .config-actions .edit-btn { background-color: #e7f3ff; color: var(--accent-color); }
 .api-config-item .config-actions .delete-btn { background-color: #ffebee; color: #c62828; }
+
+/* === Performance & iOS-like Responsive Frame (Appended) === */
+
+/* Skip rendering offscreen content for large scroll containers */
+#chat-list,
+#favorites-list,
+#memories-list,
+#chat-messages,
+.list-container {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 600px; /* fallback placeholder to avoid layout jumps */
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Safe area support */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+#status-bar { padding-top: calc(12px + var(--safe-top)); }
+#chat-input-area, #chat-list-bottom-nav, .modal-footer {
+  padding-bottom: calc(10px + var(--safe-bottom));
+}
+
+/* Tablet & Desktop: show phone frame (default styles already do). */
+
+/* Phone (<=600px): frameless, fill screen */
+@media (max-width: 600px) {
+  html, body { padding: 0; background: #000; height: 100%; }
+  #phone-frame {
+    display: contents; /* collapse decorative frame */
+  }
+  #phone-screen {
+    width: 100vw;
+    height: 100svh;  /* iOS Safari friendly viewport */
+    border: none;
+    border-radius: 0;
+  }
+  .notch { display: none; }
+}
+
+/* Utility: hide outline and tap highlight for iOS-like feel */
+* { -webkit-tap-highlight-color: rgba(0,0,0,0); }
+
+
+/* --- Contact Picker Enhancements (patched) --- */
+#contact-picker-screen .contact-picker-toolbar {
+  padding: 8px 12px;
+  position: sticky;
+  top: 0;
+  background: var(--bg-primary, #fff);
+  z-index: 2;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+}
+#contact-picker-screen .search-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#contact-picker-screen .search-box input {
+  flex: 1;
+  height: 36px;
+  border-radius: 18px;
+  border: 1px solid rgba(0,0,0,.12);
+  padding: 0 12px;
+  font-size: 14px;
+  outline: none;
+  background: var(--bg-secondary, #fafafa);
+}
+#contact-picker-screen .search-box button {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,.06);
+  cursor: pointer;
+}
+#contact-picker-screen .contact-picker-body {
+  position: relative;
+  display: flex;
+}
+#contact-picker-screen .contact-picker-list {
+  flex: 1;
+  padding-bottom: 40px;
+}
+#contact-picker-screen .alpha-index {
+  position: sticky;
+  top: 80px;
+  list-style: none;
+  margin: 0;
+  padding: 0 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: calc(100vh - 120px);
+  overflow: auto;
+  user-select: none;
+}
+#contact-picker-screen .alpha-index li {
+  font-size: 12px;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-secondary, #666);
+}
+#contact-picker-screen .alpha-index li:hover {
+  background: rgba(0,0,0,.06);
+}
+.contact-group-header {
+  position: sticky;
+  top: 48px;
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+  padding: 6px 12px;
+  background: var(--bg-primary, #fff);
+}
+.contact-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(0,0,0,.04);
+}
+.contact-picker-item .checkbox {
+  width: 18px; height: 18px;
+  border-radius: 4px;
+  border: 1px solid rgba(0,0,0,.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.contact-picker-item.selected .checkbox {
+  background: #1677ff;
+  border-color: #1677ff;
+}
+.contact-picker-item.selected .checkbox::after {
+  content: "✓";
+  color: #fff; font-size: 12px;
+}
+/* Avatar scaling fix */
+.contact-picker-item .avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 44px;
+  background: #f3f3f3;
+}
+.contact-picker-item .name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Call feed reused for outgoing-call logs */
+#outgoing-call-log.call-feed, #video-call-main.call-feed {
+  padding: 8px 12px;
+  overflow-y: auto;
+  height: calc(100% - 140px);
+}
+.call-message-bubble {
+  max-width: 70%;
+  margin: 6px 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.4;
+  background: #f3f3f3;
+}
+.call-message-bubble.ai-speech {
+  background: #e6f4ff;
+}
+/* Dark mode */
+#phone-screen.dark-mode #contact-picker-screen .search-box input {
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.15);
+  color: #eee;
+}
+#phone-screen.dark-mode .contact-group-header {
+  background: #111;
+  color: #9aa0a6;
+}
+#phone-screen.dark-mode .contact-picker-item {
+  border-bottom-color: rgba(255,255,255,.06);
+}
+#phone-screen.dark-mode .contact-picker-item .checkbox {
+  border-color: rgba(255,255,255,.25);
+}
