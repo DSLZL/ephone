@@ -722,8 +722,8 @@ document.addEventListener("DOMContentLoaded", () => {
           : `<img src="${post.imageUrl}" class="chat-image">`;
       } else if (post.type === "text_image") {
         contentHtml = publicTextHtml
-          ? `${publicTextHtml}<div style="margin-top:10px;"><img src=" img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}"></div>`
-          : `<img src=" img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}">`;
+          ? `${publicTextHtml}<div style="margin-top:10px;"><img src="img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}"></div>`
+          : `<img src="img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}">`;
       }
 
       let likesHtml = "";
@@ -886,8 +886,8 @@ document.addEventListener("DOMContentLoaded", () => {
             : `<img src="${post.imageUrl}" class="chat-image">`;
         } else if (post.type === "text_image") {
           contentHtml = publicTextHtml
-            ? `${publicTextHtml}<div style="margin-top:10px;"><img src=" img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}"></div>`
-            : `<img src=" img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}">`;
+            ? `${publicTextHtml}<div style="margin-top:10px;"><img src="img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}"></div>`
+            : `<img src="img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}">`;
         }
 
         // ▼▼▼ 新增/修改的代码开始 ▼▼▼
@@ -2242,7 +2242,7 @@ async function openApiConfigEditor(configId = null) {
     else if (msg.type === "user_photo" || msg.type === "ai_image") {
       bubble.classList.add("is-ai-image");
       const altText = msg.type === "user_photo" ? "用户描述的照片" : "AI生成的图片";
-      contentHtml = `<img src=" img/Ai-Generated-Image.jpg" class="ai-generated-image" alt="${altText}" data-description="${msg.content}">`;
+      contentHtml = `<img src="img/Ai-Generated-Image.jpg" class="ai-generated-image" alt="${altText}" data-description="${msg.content}">`;
     } else if (msg.type === "voice_message") {
       bubble.classList.add("is-voice-message");
 
@@ -2317,7 +2317,7 @@ async function openApiConfigEditor(configId = null) {
         <div class="transfer-card">
             <div class="transfer-title">${heartIcon} ${titleText}</div>
             <div class="transfer-amount">¥ ${Number(msg.amount).toFixed(2)}</div>
-            <div class.transfer-note">${noteText}</div>
+            <div class="transfer-note">${noteText}</div>
         </div>
     `;
     } else if (msg.type === "waimai_request") {
@@ -4847,7 +4847,7 @@ ${contextSummaryForApproval}
     element.addEventListener("mousedown", startPress);
     element.addEventListener("mouseup", cancelPress);
     element.addEventListener("mouseleave", cancelPress);
-    element.addEventListener("touchstart", startPress, { passive: true });
+    element.addEventListener("touchstart", startPress, { passive: false });
     element.addEventListener("touchend", cancelPress);
     element.addEventListener("touchmove", cancelPress);
   }
@@ -9842,7 +9842,7 @@ ${contextSummary}
         role: "user",
         content,
         timestamp: Date.now(),
-        ...(currentReplyContext && { quote: currentReplyContext }),
+        ...(currentReplyContext ? { quote: currentReplyContext } : {}),
       };
 
       chat.history.push(msg);
@@ -11776,3 +11776,6 @@ ${contextSummary}
 
   init();
 });
+
+// Ensure renderChatListProxy is wired
+if (typeof renderChatList === 'function') { window.renderChatListProxy = renderChatList; }

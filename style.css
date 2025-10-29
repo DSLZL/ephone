@@ -901,3 +901,11 @@ button.action-btn svg { width: 24px; height: 24px; }
 
 /* Utility: hide outline and tap highlight for iOS-like feel */
 * { -webkit-tap-highlight-color: rgba(0,0,0,0); }
+
+/* === Added by automated optimizer === */
+html.frameless #phone-frame { display: contents; }
+html.frameless #phone-screen { width: 100vw; height: 100svh; border: none; border-radius: 0; }
+html.frameless .notch { display: none; }
+
+/* Micro-optimizations */
+#notification-bar { will-change: opacity, transform; }

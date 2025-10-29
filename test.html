@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
   <head>
+  <!-- Preconnects for external sticker/image hosts -->
+  <link rel="preconnect" href="https://i.postimg.cc" crossorigin>
+  <link rel="preconnect" href="https://files.catbox.moe" crossorigin>
+
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
 
@@ -11,8 +15,8 @@
     <link rel="preconnect" href="https://unpkg.com">
     <title>EPhone</title>
     <script src="https://unpkg.com/dexie/dist/dexie.js" defer></script>
-    <link rel="preload" href="style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="style.css"></noscript>
+    <link rel="preload" href="style.fixed.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="style.fixed.css"></noscript>
       <meta name="theme-color" content="#000000" />
   </head>
 
@@ -1815,6 +1819,6 @@
         </div>
       </div>
     </div>
-    <script src="script.js"></script>
+    <script src="script.fixed.js"></script>
   </body>
 </html>
