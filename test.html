@@ -1,23 +1,27 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
   <head>
-  <!-- Preconnects for external sticker/image hosts -->
-  <link rel="preconnect" href="https://i.postimg.cc" crossorigin>
-  <link rel="preconnect" href="https://files.catbox.moe" crossorigin>
-
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
 
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <link rel="apple-touch-icon" href="img/Touch-Icon.jpg" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-    <link rel="preconnect" href="https://unpkg.com">
+    <link rel="preconnect" href="https://unpkg.com" />
     <title>EPhone</title>
     <script src="https://unpkg.com/dexie/dist/dexie.js" defer></script>
-    <link rel="preload" href="style.fixed.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="style.fixed.css"></noscript>
-      <meta name="theme-color" content="#000000" />
+    <link
+      rel="preload"
+      href="style_patched.css"
+      as="style"
+      onload="this.onload=null;this.rel='stylesheet'"
+    />
+    <noscript><link rel="stylesheet" href="style_patched.css" /></noscript>
+    <meta name="theme-color" content="#000000" />
   </head>
 
   <body>
@@ -1819,6 +1823,6 @@
         </div>
       </div>
     </div>
-    <script src="script.fixed.js"></script>
+    <script src="script_patched.js"></script>
   </body>
 </html>

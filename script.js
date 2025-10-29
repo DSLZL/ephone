@@ -266,6 +266,15 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   applyFrameMode();
   window.addEventListener("resize", applyFrameMode, { passive: true });
+  /* visibility safeguard for streaming (patched) */
+  document.addEventListener("visibilitychange", async () => {
+    if (document.hidden) {
+      try {
+        // flush any in-flight streaming content
+        await db?.chats?.put?.(state.chats[state.activeChatId]);
+      } catch(e){}
+    }
+  }, { passive: true });
 
   // 2) Default all images to lazy & async decoding (static + dynamically added)
   function setImagePerfAttrs(img) {
@@ -363,6 +372,33 @@ document.addEventListener("DOMContentLoaded", () => {
   const defaultMyGroupAvatar = "img/MyGroupAvatar.jpg";
   const defaultGroupMemberAvatar = "img/GroupMemberAvatar.jpg";
   const defaultGroupAvatar = "img/GroupAvatar.jpg";
+
+// === Contact Picker Helpers (patched) ===
+function getNameInitial(name) {
+  if (!name) return "#";
+  const ch = name.trim()[0].toUpperCase();
+  return ch >= "A" && ch <= "Z" ? ch : "#";
+}
+
+function groupContactsByInitial(contacts) {
+  const groups = new Map();
+  contacts.forEach(c => {
+    const letter = getNameInitial(c.name);
+    if (!groups.has(letter)) groups.set(letter, []);
+    groups.get(letter).push(c);
+  });
+  // sort each group by locale compare
+  for (const arr of groups.values()) {
+    arr.sort((a,b)=>a.name.localeCompare(b.name, 'zh-CN'));
+  }
+  // produce ordered letters A-Z then #
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+  if (groups.has("#")) letters.push("#");
+  const ordered = [];
+  letters.forEach(l => { if (groups.has(l)) ordered.push([l, groups.get(l)]); });
+  return ordered;
+}
+
   let notificationTimeout;
 
   // ▼▼▼ 在JS顶部，变量定义区，添加这个新常量 ▼▼▼
@@ -722,8 +758,8 @@ document.addEventListener("DOMContentLoaded", () => {
           : `<img src="${post.imageUrl}" class="chat-image">`;
       } else if (post.type === "text_image") {
         contentHtml = publicTextHtml
-          ? `${publicTextHtml}<div style="margin-top:10px;"><img src="img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}"></div>`
-          : `<img src="img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}">`;
+          ? `${publicTextHtml}<div style="margin-top:10px;"><img src=" img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}"></div>`
+          : `<img src=" img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}">`;
       }
 
       let likesHtml = "";
@@ -886,8 +922,8 @@ document.addEventListener("DOMContentLoaded", () => {
             : `<img src="${post.imageUrl}" class="chat-image">`;
         } else if (post.type === "text_image") {
           contentHtml = publicTextHtml
-            ? `${publicTextHtml}<div style="margin-top:10px;"><img src="img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}"></div>`
-            : `<img src="img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}">`;
+            ? `${publicTextHtml}<div style="margin-top:10px;"><img src=" img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}"></div>`
+            : `<img src=" img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}">`;
         }
 
         // ▼▼▼ 新增/修改的代码开始 ▼▼▼
@@ -2242,7 +2278,7 @@ async function openApiConfigEditor(configId = null) {
     else if (msg.type === "user_photo" || msg.type === "ai_image") {
       bubble.classList.add("is-ai-image");
       const altText = msg.type === "user_photo" ? "用户描述的照片" : "AI生成的图片";
-      contentHtml = `<img src="img/Ai-Generated-Image.jpg" class="ai-generated-image" alt="${altText}" data-description="${msg.content}">`;
+      contentHtml = `<img src=" img/Ai-Generated-Image.jpg" class="ai-generated-image" alt="${altText}" data-description="${msg.content}">`;
     } else if (msg.type === "voice_message") {
       bubble.classList.add("is-voice-message");
 
@@ -2317,7 +2353,7 @@ async function openApiConfigEditor(configId = null) {
         <div class="transfer-card">
             <div class="transfer-title">${heartIcon} ${titleText}</div>
             <div class="transfer-amount">¥ ${Number(msg.amount).toFixed(2)}</div>
-            <div class="transfer-note">${noteText}</div>
+            <div class.transfer-note">${noteText}</div>
         </div>
     `;
     } else if (msg.type === "waimai_request") {
@@ -2716,7 +2752,39 @@ async function openApiConfigEditor(configId = null) {
             content: "对方拒绝了你的视频通话请求。",
             timestamp: Date.now(),
           };
-          chat.history.push(aiMessage);
+          /* -- call routing patched -- */
+if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
+  // When waiting for/inside a call, route assistant messages to call UI instead of chat
+  const scope = videoCallState.isActive ? "active" : "outgoing";
+  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
+    appendToCallFeed(aiMessage.content, scope);
+  }
+  // Also persist a compact record for history if you want (optional), but do not render as chat bubble now
+  aiMessage.isInCall = true;
+  /* -- call routing patched -- */
+if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
+  const scope = videoCallState.isActive ? "active" : "outgoing";
+  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
+    appendToCallFeed(aiMessage.content, scope);
+  }
+  aiMessage.isInCall = true;
+  chat.history.push(aiMessage);
+} else {
+  chat.history.push(aiMessage);
+}
+} else {
+  /* -- call routing patched -- */
+if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
+  const scope = videoCallState.isActive ? "active" : "outgoing";
+  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
+    appendToCallFeed(aiMessage.content, scope);
+  }
+  aiMessage.isInCall = true;
+  chat.history.push(aiMessage);
+} else {
+  chat.history.push(aiMessage);
+}
+}
           await db.chats.put(chat);
           showScreen("chat-interface-screen");
           renderChatInterface(chatId);
@@ -3272,7 +3340,17 @@ async function openApiConfigEditor(configId = null) {
       }
 
       if (aiMessage) {
-        chat.history.push(aiMessage);
+        /* -- call routing patched -- */
+if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
+  const scope = videoCallState.isActive ? "active" : "outgoing";
+  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
+    appendToCallFeed(aiMessage.content, scope);
+  }
+  aiMessage.isInCall = true;
+  chat.history.push(aiMessage);
+} else {
+  chat.history.push(aiMessage);
+}
         if (!isViewingThisChat && !notificationShown) {
           let notificationText;
           switch (aiMessage.type) {
@@ -3964,6 +4042,9 @@ ${contextSummaryForApproval}
                   const delta = parsed.choices[0].delta.content;
                   if (delta) {
                     fullResponseContent += delta;
+                    aiMessagePlaceholder.content = fullResponseContent;
+                    /* streaming autosave patched */
+                    if (!aiMessagePlaceholder._lastSave || Date.now()-aiMessagePlaceholder._lastSave>500) { try { await db.chats.put(chat); aiMessagePlaceholder._lastSave=Date.now(); } catch(e){} }
                     contentElement.innerHTML = fullResponseContent
                       .replace(/```json\s*/, "")
                       .replace(/```$/, "")
@@ -4013,7 +4094,17 @@ ${contextSummaryForApproval}
                   content: "对方拒绝了你的视频通话请求。",
                   timestamp: Date.now(),
                 };
-                chat.history.push(aiMessage);
+                /* -- call routing patched -- */
+if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
+  const scope = videoCallState.isActive ? "active" : "outgoing";
+  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
+    appendToCallFeed(aiMessage.content, scope);
+  }
+  aiMessage.isInCall = true;
+  chat.history.push(aiMessage);
+} else {
+  chat.history.push(aiMessage);
+}
                 await db.chats.put(chat);
                 showScreen("chat-interface-screen");
                 renderChatInterface(chatId);
@@ -4582,7 +4673,17 @@ ${contextSummaryForApproval}
             }
 
             if (aiMessage) {
-              chat.history.push(aiMessage);
+              /* -- call routing patched -- */
+if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
+  const scope = videoCallState.isActive ? "active" : "outgoing";
+  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
+    appendToCallFeed(aiMessage.content, scope);
+  }
+  aiMessage.isInCall = true;
+  chat.history.push(aiMessage);
+} else {
+  chat.history.push(aiMessage);
+}
               if (!isViewingThisChat && !notificationShown) {
                 let notificationText;
                 switch (aiMessage.type) {
@@ -4847,7 +4948,7 @@ ${contextSummaryForApproval}
     element.addEventListener("mousedown", startPress);
     element.addEventListener("mouseup", cancelPress);
     element.addEventListener("mouseleave", cancelPress);
-    element.addEventListener("touchstart", startPress, { passive: false });
+    element.addEventListener("touchstart", startPress, { passive: true });
     element.addEventListener("touchend", cancelPress);
     element.addEventListener("touchmove", cancelPress);
   }
@@ -5819,7 +5920,17 @@ ${worldBookContent} // <--【核心】在这里注入世界书内容
           };
 
           chat.unreadCount = (chat.unreadCount || 0) + 1;
-          chat.history.push(aiMessage);
+          /* -- call routing patched -- */
+if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
+  const scope = videoCallState.isActive ? "active" : "outgoing";
+  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
+    appendToCallFeed(aiMessage.content, scope);
+  }
+  aiMessage.isInCall = true;
+  chat.history.push(aiMessage);
+} else {
+  chat.history.push(aiMessage);
+}
           await db.chats.put(chat);
           showNotification(chatId, aiMessage.content);
           renderChatList();
@@ -6626,6 +6737,12 @@ ${worldBookContent} // <--【核心】在这里注入世界书内容
     showScreen("contact-picker-screen");
   }
   // ▲▲▲ 替换结束 ▲▲▲
+
+  /**
+   * 渲染联系人选择列表
+   */
+  
+// ▼▼▼ 请从这里开始，替换你文件中所有后续内容 ▼▼▼
 
   /**
    * 渲染联系人选择列表
@@ -11779,3 +11896,5 @@ ${contextSummary}
 
 // Ensure renderChatListProxy is wired
 if (typeof renderChatList === 'function') { window.renderChatListProxy = renderChatList; }
+
+// ▲▲▲ 替换到文件末尾结束 ▲▲▲
