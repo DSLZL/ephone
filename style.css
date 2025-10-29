@@ -850,3 +850,54 @@ button.action-btn svg { width: 24px; height: 24px; }
 .api-config-item .config-actions button { padding: 5px 10px; font-size: 12px; border-radius: 5px; cursor: pointer; border: 1px solid transparent; }
 .api-config-item .config-actions .edit-btn { background-color: #e7f3ff; color: var(--accent-color); }
 .api-config-item .config-actions .delete-btn { background-color: #ffebee; color: #c62828; }
+
+/* === Performance & iOS-like Responsive Frame (Appended) === */
+
+/* Skip rendering offscreen content for large scroll containers */
+#chat-list,
+#favorites-list,
+#memories-list,
+#chat-messages,
+.list-container {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 600px; /* fallback placeholder to avoid layout jumps */
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Safe area support */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+#status-bar { padding-top: calc(12px + var(--safe-top)); }
+#chat-input-area, #chat-list-bottom-nav, .modal-footer {
+  padding-bottom: calc(10px + var(--safe-bottom));
+}
+
+/* Tablet & Desktop: show phone frame (default styles already do). */
+
+/* Phone (<=600px): frameless, fill screen */
+@media (max-width: 600px) {
+  html, body { padding: 0; background: #000; height: 100%; }
+  #phone-frame {
+    display: contents; /* collapse decorative frame */
+  }
+  #phone-screen {
+    width: 100vw;
+    height: 100svh;  /* iOS Safari friendly viewport */
+    border: none;
+    border-radius: 0;
+  }
+  .notch { display: none; }
+}
+
+/* Utility: hide outline and tap highlight for iOS-like feel */
+* { -webkit-tap-highlight-color: rgba(0,0,0,0); }

@@ -258,6 +258,50 @@ function toGeminiRequestData(model, apiKey, systemInstruction, messagesForDecisi
   };
 }
 document.addEventListener("DOMContentLoaded", () => {
+  // === Lightweight performance helpers ===
+  // 1) Frame mode: show decorative phone frame on tablet/desktop, hide on phones
+  function applyFrameMode() {
+    const isPhone = window.matchMedia("(max-width: 600px)").matches;
+    document.documentElement.classList.toggle("frameless", isPhone);
+  }
+  applyFrameMode();
+  window.addEventListener("resize", applyFrameMode, { passive: true });
+
+  // 2) Default all images to lazy & async decoding (static + dynamically added)
+  function setImagePerfAttrs(img) {
+    try {
+      if (!img.hasAttribute("loading")) img.setAttribute("loading", "lazy");
+      if (!img.hasAttribute("decoding")) img.setAttribute("decoding", "async");
+    } catch (e) {}
+  }
+  document.querySelectorAll("img").forEach(setImagePerfAttrs);
+  const mo = new MutationObserver((mutations) => {
+    for (const m of mutations) {
+      m.addedNodes && m.addedNodes.forEach((node) => {
+        if (node && node.tagName === "IMG") setImagePerfAttrs(node);
+        else if (node && node.querySelectorAll) node.querySelectorAll("img").forEach(setImagePerfAttrs);
+      });
+    }
+  });
+  mo.observe(document.documentElement, { childList: true, subtree: true });
+
+  // 3) Encourage passive listeners for scroll/touch to prevent jank
+  (function () {
+    const orig = EventTarget.prototype.addEventListener;
+    const defaultPassive = { touchstart: true, touchmove: true, wheel: true };
+    EventTarget.prototype.addEventListener = function(type, listener, options) {
+      let opts = options;
+      if (typeof options === "object" && options !== null) {
+        if (defaultPassive[type] && options.passive == null) {
+          opts = Object.assign({}, options, { passive: true });
+        }
+      } else if (options === undefined && defaultPassive[type]) {
+        opts = { passive: true };
+      }
+      return orig.call(this, type, listener, opts);
+    };
+  })();
+
   // ===================================================================
   // 1. 所有变量和常量定义
   // ===================================================================
