@@ -1047,3 +1047,29 @@ button.action-btn svg { width: 24px; height: 24px; }
 #phone-screen.dark-mode .contact-picker-item .checkbox {
   border-color: rgba(255,255,255,.25);
 }
+
+/* ===================================================================
+   14. Service Worker 更新提示样式
+   =================================================================== */
+#update-notification {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #2c2c2e;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+  font-size: 14px;
+  text-align: center;
+}
+
+#update-notification a {
+  color: #58a6ff;
+  font-weight: bold;
+  text-decoration: underline;
+  cursor: pointer;
+}
