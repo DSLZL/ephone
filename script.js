@@ -267,14 +267,18 @@ document.addEventListener("DOMContentLoaded", () => {
   applyFrameMode();
   window.addEventListener("resize", applyFrameMode, { passive: true });
   /* visibility safeguard for streaming (patched) */
-  document.addEventListener("visibilitychange", async () => {
-    if (document.hidden) {
-      try {
-        // flush any in-flight streaming content
-        await db?.chats?.put?.(state.chats[state.activeChatId]);
-      } catch(e){}
-    }
-  }, { passive: true });
+  document.addEventListener(
+    "visibilitychange",
+    async () => {
+      if (document.hidden) {
+        try {
+          // flush any in-flight streaming content
+          await db?.chats?.put?.(state.chats[state.activeChatId]);
+        } catch (e) {}
+      }
+    },
+    { passive: true }
+  );
 
   // 2) Default all images to lazy & async decoding (static + dynamically added)
   function setImagePerfAttrs(img) {
@@ -286,10 +290,12 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("img").forEach(setImagePerfAttrs);
   const mo = new MutationObserver((mutations) => {
     for (const m of mutations) {
-      m.addedNodes && m.addedNodes.forEach((node) => {
-        if (node && node.tagName === "IMG") setImagePerfAttrs(node);
-        else if (node && node.querySelectorAll) node.querySelectorAll("img").forEach(setImagePerfAttrs);
-      });
+      m.addedNodes &&
+        m.addedNodes.forEach((node) => {
+          if (node && node.tagName === "IMG") setImagePerfAttrs(node);
+          else if (node && node.querySelectorAll)
+            node.querySelectorAll("img").forEach(setImagePerfAttrs);
+        });
     }
   });
   mo.observe(document.documentElement, { childList: true, subtree: true });
@@ -298,7 +304,7 @@ document.addEventListener("DOMContentLoaded", () => {
   (function () {
     const orig = EventTarget.prototype.addEventListener;
     const defaultPassive = { touchstart: true, touchmove: true, wheel: true };
-    EventTarget.prototype.addEventListener = function(type, listener, options) {
+    EventTarget.prototype.addEventListener = function (type, listener, options) {
       let opts = options;
       if (typeof options === "object" && options !== null) {
         if (defaultPassive[type] && options.passive == null) {
@@ -373,31 +379,33 @@ document.addEventListener("DOMContentLoaded", () => {
   const defaultGroupMemberAvatar = "img/GroupMemberAvatar.jpg";
   const defaultGroupAvatar = "img/GroupAvatar.jpg";
 
-// === Contact Picker Helpers (patched) ===
-function getNameInitial(name) {
-  if (!name) return "#";
-  const ch = name.trim()[0].toUpperCase();
-  return ch >= "A" && ch <= "Z" ? ch : "#";
-}
-
-function groupContactsByInitial(contacts) {
-  const groups = new Map();
-  contacts.forEach(c => {
-    const letter = getNameInitial(c.name);
-    if (!groups.has(letter)) groups.set(letter, []);
-    groups.get(letter).push(c);
-  });
-  // sort each group by locale compare
-  for (const arr of groups.values()) {
-    arr.sort((a,b)=>a.name.localeCompare(b.name, 'zh-CN'));
+  // === Contact Picker Helpers (patched) ===
+  function getNameInitial(name) {
+    if (!name) return "#";
+    const ch = name.trim()[0].toUpperCase();
+    return ch >= "A" && ch <= "Z" ? ch : "#";
   }
-  // produce ordered letters A-Z then #
-  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-  if (groups.has("#")) letters.push("#");
-  const ordered = [];
-  letters.forEach(l => { if (groups.has(l)) ordered.push([l, groups.get(l)]); });
-  return ordered;
-}
+
+  function groupContactsByInitial(contacts) {
+    const groups = new Map();
+    contacts.forEach((c) => {
+      const letter = getNameInitial(c.name);
+      if (!groups.has(letter)) groups.set(letter, []);
+      groups.get(letter).push(c);
+    });
+    // sort each group by locale compare
+    for (const arr of groups.values()) {
+      arr.sort((a, b) => a.name.localeCompare(b.name, "zh-CN"));
+    }
+    // produce ordered letters A-Z then #
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+    if (groups.has("#")) letters.push("#");
+    const ordered = [];
+    letters.forEach((l) => {
+      if (groups.has(l)) ordered.push([l, groups.get(l)]);
+    });
+    return ordered;
+  }
 
   let notificationTimeout;
 
@@ -1145,29 +1153,31 @@ function groupContactsByInitial(contacts) {
           await table.clear();
         }
 
-        if (Array.isArray(data.chats)) await db.chats.bulkPut(data.chats);
-        if (Array.isArray(data.apiConfigs)) await db.apiConfigs.bulkPut(data.apiConfigs);
-        if (Array.isArray(data.worldBooks)) await db.worldBooks.bulkPut(data.worldBooks);
+        // ▼▼▼ 核心修正：在 bulkPut 之前过滤掉所有无效数据（null 或 undefined） ▼▼▼
+        if (Array.isArray(data.chats)) await db.chats.bulkPut(data.chats.filter((item) => item));
+        if (Array.isArray(data.worldBooks))
+          await db.worldBooks.bulkPut(data.worldBooks.filter((item) => item));
         if (Array.isArray(data.worldBookCategories))
-          await db.worldBookCategories.bulkPut(data.worldBookCategories);
-        if (Array.isArray(data.userStickers)) await db.userStickers.bulkPut(data.userStickers);
+          await db.worldBookCategories.bulkPut(data.worldBookCategories.filter((item) => item));
+        if (Array.isArray(data.userStickers))
+          await db.userStickers.bulkPut(data.userStickers.filter((item) => item));
         if (Array.isArray(data.personaPresets))
-          await db.personaPresets.bulkPut(data.personaPresets);
-        if (Array.isArray(data.qzonePosts)) await db.qzonePosts.bulkPut(data.qzonePosts);
-        if (Array.isArray(data.qzoneAlbums)) await db.qzoneAlbums.bulkPut(data.qzoneAlbums);
-        if (Array.isArray(data.qzonePhotos)) await db.qzonePhotos.bulkPut(data.qzonePhotos);
-        if (Array.isArray(data.favorites)) await db.favorites.bulkPut(data.favorites);
-        if (Array.isArray(data.qzoneGroups)) await db.qzoneGroups.bulkPut(data.qzoneGroups);
-        if (Array.isArray(data.memories)) await db.memories.bulkPut(data.memories); // 【核心修正】新增
+          await db.personaPresets.bulkPut(data.personaPresets.filter((item) => item));
+        if (Array.isArray(data.qzonePosts))
+          await db.qzonePosts.bulkPut(data.qzonePosts.filter((item) => item));
+        if (Array.isArray(data.qzoneAlbums))
+          await db.qzoneAlbums.bulkPut(data.qzoneAlbums.filter((item) => item));
+        if (Array.isArray(data.qzonePhotos))
+          await db.qzonePhotos.bulkPut(data.qzonePhotos.filter((item) => item));
+        if (Array.isArray(data.favorites))
+          await db.favorites.bulkPut(data.favorites.filter((item) => item));
+        if (Array.isArray(data.qzoneGroups))
+          await db.qzoneGroups.bulkPut(data.qzoneGroups.filter((item) => item));
+        if (Array.isArray(data.memories))
+          await db.memories.bulkPut(data.memories.filter((item) => item));
+        // ▲▲▲ 修正结束 ▲▲▲
 
-        if (data.apiConfig) {
-          await db.apiConfigs.put({
-            name: "旧的默认配置",
-            url: data.apiConfig.proxyUrl,
-            apiKey: data.apiConfig.apiKey,
-            model: data.apiConfig.model,
-          });
-        }
+        if (data.apiConfig) await db.apiConfig.put(data.apiConfig);
         if (data.globalSettings) await db.globalSettings.put(data.globalSettings);
         if (data.musicLibrary) await db.musicLibrary.put(data.musicLibrary);
         if (data.qzoneSettings) await db.qzoneSettings.put(data.qzoneSettings);
@@ -1487,48 +1497,48 @@ function groupContactsByInitial(contacts) {
       listEl.appendChild(item);
     });
   }
-// ▼▼▼ [新版本] 请使用此函数进行替换 ▼▼▼
-async function openApiConfigEditor(configId = null) {
-  let config = {
-    name: "",
-    url: "",
-    apiKey: "",
-    model: "gpt-4o",
-    enableStream: true,
-    hideStreamResponse: false,
-  };
-  if (configId) {
-    config = state.apiConfigs.find((c) => c.id === configId) || config;
+  // ▼▼▼ [新版本] 请使用此函数进行替换 ▼▼▼
+  async function openApiConfigEditor(configId = null) {
+    let config = {
+      name: "",
+      url: "",
+      apiKey: "",
+      model: "gpt-4o",
+      enableStream: true,
+      hideStreamResponse: false,
+    };
+    if (configId) {
+      config = state.apiConfigs.find((c) => c.id === configId) || config;
+    }
+
+    // 填充基本信息
+    document.getElementById("config-editor-id").value = configId || "";
+    document.getElementById("config-name-input").value = config.name;
+    document.getElementById("config-url-input").value = config.url;
+    document.getElementById("config-key-input").value = config.apiKey;
+
+    // --- 【核心修复】 ---
+    // 每次打开时，都重置模型下拉列表，只显示当前配置已保存的模型
+    const modelSelect = document.getElementById("config-model-select");
+    // 1. 清空所有旧的 <option> 元素
+    modelSelect.innerHTML = "";
+    // 2. 创建一个只包含当前已保存模型的新 <option>
+    const savedModelOption = document.createElement("option");
+    savedModelOption.value = config.model;
+    savedModelOption.textContent = config.model;
+    savedModelOption.selected = true;
+    // 3. 将这个唯一的选项添加到下拉列表中
+    modelSelect.appendChild(savedModelOption);
+    // --- 【修复结束】 ---
+
+    // 填充开关状态
+    document.getElementById("config-stream-switch").checked = config.enableStream;
+    document.getElementById("config-hide-stream-switch").checked = config.hideStreamResponse;
+
+    // 显示模态框
+    document.getElementById("api-config-editor-modal").classList.add("visible");
   }
-
-  // 填充基本信息
-  document.getElementById("config-editor-id").value = configId || "";
-  document.getElementById("config-name-input").value = config.name;
-  document.getElementById("config-url-input").value = config.url;
-  document.getElementById("config-key-input").value = config.apiKey;
-  
-  // --- 【核心修复】 ---
-  // 每次打开时，都重置模型下拉列表，只显示当前配置已保存的模型
-  const modelSelect = document.getElementById("config-model-select");
-  // 1. 清空所有旧的 <option> 元素
-  modelSelect.innerHTML = "";
-  // 2. 创建一个只包含当前已保存模型的新 <option>
-  const savedModelOption = document.createElement("option");
-  savedModelOption.value = config.model;
-  savedModelOption.textContent = config.model;
-  savedModelOption.selected = true;
-  // 3. 将这个唯一的选项添加到下拉列表中
-  modelSelect.appendChild(savedModelOption);
-  // --- 【修复结束】 ---
-
-  // 填充开关状态
-  document.getElementById("config-stream-switch").checked = config.enableStream;
-  document.getElementById("config-hide-stream-switch").checked = config.hideStreamResponse;
-
-  // 显示模态框
-  document.getElementById("api-config-editor-modal").classList.add("visible");
-}
-// ▲▲▲ 替换结束 ▲▲▲
+  // ▲▲▲ 替换结束 ▲▲▲
 
   async function saveApiConfig() {
     const id = document.getElementById("config-editor-id").value;
@@ -2753,38 +2763,38 @@ async function openApiConfigEditor(configId = null) {
             timestamp: Date.now(),
           };
           /* -- call routing patched -- */
-if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
-  // When waiting for/inside a call, route assistant messages to call UI instead of chat
-  const scope = videoCallState.isActive ? "active" : "outgoing";
-  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
-    appendToCallFeed(aiMessage.content, scope);
-  }
-  // Also persist a compact record for history if you want (optional), but do not render as chat bubble now
-  aiMessage.isInCall = true;
-  /* -- call routing patched -- */
-if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
-  const scope = videoCallState.isActive ? "active" : "outgoing";
-  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
-    appendToCallFeed(aiMessage.content, scope);
-  }
-  aiMessage.isInCall = true;
-  chat.history.push(aiMessage);
-} else {
-  chat.history.push(aiMessage);
-}
-} else {
-  /* -- call routing patched -- */
-if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
-  const scope = videoCallState.isActive ? "active" : "outgoing";
-  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
-    appendToCallFeed(aiMessage.content, scope);
-  }
-  aiMessage.isInCall = true;
-  chat.history.push(aiMessage);
-} else {
-  chat.history.push(aiMessage);
-}
-}
+          if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
+            // When waiting for/inside a call, route assistant messages to call UI instead of chat
+            const scope = videoCallState.isActive ? "active" : "outgoing";
+            if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
+              appendToCallFeed(aiMessage.content, scope);
+            }
+            // Also persist a compact record for history if you want (optional), but do not render as chat bubble now
+            aiMessage.isInCall = true;
+            /* -- call routing patched -- */
+            if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
+              const scope = videoCallState.isActive ? "active" : "outgoing";
+              if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
+                appendToCallFeed(aiMessage.content, scope);
+              }
+              aiMessage.isInCall = true;
+              chat.history.push(aiMessage);
+            } else {
+              chat.history.push(aiMessage);
+            }
+          } else {
+            /* -- call routing patched -- */
+            if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
+              const scope = videoCallState.isActive ? "active" : "outgoing";
+              if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
+                appendToCallFeed(aiMessage.content, scope);
+              }
+              aiMessage.isInCall = true;
+              chat.history.push(aiMessage);
+            } else {
+              chat.history.push(aiMessage);
+            }
+          }
           await db.chats.put(chat);
           showScreen("chat-interface-screen");
           renderChatInterface(chatId);
@@ -3341,16 +3351,16 @@ if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingRespo
 
       if (aiMessage) {
         /* -- call routing patched -- */
-if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
-  const scope = videoCallState.isActive ? "active" : "outgoing";
-  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
-    appendToCallFeed(aiMessage.content, scope);
-  }
-  aiMessage.isInCall = true;
-  chat.history.push(aiMessage);
-} else {
-  chat.history.push(aiMessage);
-}
+        if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
+          const scope = videoCallState.isActive ? "active" : "outgoing";
+          if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
+            appendToCallFeed(aiMessage.content, scope);
+          }
+          aiMessage.isInCall = true;
+          chat.history.push(aiMessage);
+        } else {
+          chat.history.push(aiMessage);
+        }
         if (!isViewingThisChat && !notificationShown) {
           let notificationText;
           switch (aiMessage.type) {
@@ -4044,7 +4054,15 @@ ${contextSummaryForApproval}
                     fullResponseContent += delta;
                     aiMessagePlaceholder.content = fullResponseContent;
                     /* streaming autosave patched */
-                    if (!aiMessagePlaceholder._lastSave || Date.now()-aiMessagePlaceholder._lastSave>500) { try { await db.chats.put(chat); aiMessagePlaceholder._lastSave=Date.now(); } catch(e){} }
+                    if (
+                      !aiMessagePlaceholder._lastSave ||
+                      Date.now() - aiMessagePlaceholder._lastSave > 500
+                    ) {
+                      try {
+                        await db.chats.put(chat);
+                        aiMessagePlaceholder._lastSave = Date.now();
+                      } catch (e) {}
+                    }
                     contentElement.innerHTML = fullResponseContent
                       .replace(/```json\s*/, "")
                       .replace(/```$/, "")
@@ -4095,16 +4113,19 @@ ${contextSummaryForApproval}
                   timestamp: Date.now(),
                 };
                 /* -- call routing patched -- */
-if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
-  const scope = videoCallState.isActive ? "active" : "outgoing";
-  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
-    appendToCallFeed(aiMessage.content, scope);
-  }
-  aiMessage.isInCall = true;
-  chat.history.push(aiMessage);
-} else {
-  chat.history.push(aiMessage);
-}
+                if (
+                  videoCallState &&
+                  (videoCallState.isActive || videoCallState.isAwaitingResponse)
+                ) {
+                  const scope = videoCallState.isActive ? "active" : "outgoing";
+                  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
+                    appendToCallFeed(aiMessage.content, scope);
+                  }
+                  aiMessage.isInCall = true;
+                  chat.history.push(aiMessage);
+                } else {
+                  chat.history.push(aiMessage);
+                }
                 await db.chats.put(chat);
                 showScreen("chat-interface-screen");
                 renderChatInterface(chatId);
@@ -4674,16 +4695,19 @@ if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingRespo
 
             if (aiMessage) {
               /* -- call routing patched -- */
-if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
-  const scope = videoCallState.isActive ? "active" : "outgoing";
-  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
-    appendToCallFeed(aiMessage.content, scope);
-  }
-  aiMessage.isInCall = true;
-  chat.history.push(aiMessage);
-} else {
-  chat.history.push(aiMessage);
-}
+              if (
+                videoCallState &&
+                (videoCallState.isActive || videoCallState.isAwaitingResponse)
+              ) {
+                const scope = videoCallState.isActive ? "active" : "outgoing";
+                if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
+                  appendToCallFeed(aiMessage.content, scope);
+                }
+                aiMessage.isInCall = true;
+                chat.history.push(aiMessage);
+              } else {
+                chat.history.push(aiMessage);
+              }
               if (!isViewingThisChat && !notificationShown) {
                 let notificationText;
                 switch (aiMessage.type) {
@@ -5029,7 +5053,7 @@ if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingRespo
     const iconImg = document.querySelector("#listen-together-btn img");
     if (!iconImg) return;
     if (forceReset || !musicState.isActive || musicState.activeChatId !== chatId) {
-      iconImg.src = "img/.png";
+      iconImg.src = "img/Music.png";
       iconImg.className = "";
       return;
     }
@@ -5921,16 +5945,16 @@ ${worldBookContent} // <--【核心】在这里注入世界书内容
 
           chat.unreadCount = (chat.unreadCount || 0) + 1;
           /* -- call routing patched -- */
-if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
-  const scope = videoCallState.isActive ? "active" : "outgoing";
-  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
-    appendToCallFeed(aiMessage.content, scope);
-  }
-  aiMessage.isInCall = true;
-  chat.history.push(aiMessage);
-} else {
-  chat.history.push(aiMessage);
-}
+          if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
+            const scope = videoCallState.isActive ? "active" : "outgoing";
+            if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
+              appendToCallFeed(aiMessage.content, scope);
+            }
+            aiMessage.isInCall = true;
+            chat.history.push(aiMessage);
+          } else {
+            chat.history.push(aiMessage);
+          }
           await db.chats.put(chat);
           showNotification(chatId, aiMessage.content);
           renderChatList();
@@ -6741,8 +6765,8 @@ if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingRespo
   /**
    * 渲染联系人选择列表
    */
-  
-// ▼▼▼ 请从这里开始，替换你文件中所有后续内容 ▼▼▼
+
+  // ▼▼▼ 请从这里开始，替换你文件中所有后续内容 ▼▼▼
 
   /**
    * 渲染联系人选择列表
@@ -11895,6 +11919,8 @@ ${contextSummary}
 });
 
 // Ensure renderChatListProxy is wired
-if (typeof renderChatList === 'function') { window.renderChatListProxy = renderChatList; }
+if (typeof renderChatList === "function") {
+  window.renderChatListProxy = renderChatList;
+}
 
 // ▲▲▲ 替换到文件末尾结束 ▲▲▲
