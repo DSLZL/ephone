@@ -4851,6 +4851,7 @@ ${contextSummaryForApproval}
       ) {
         renderChatInterface(chatId);
       }
+      document.getElementById("retry-btn").style.display = "flex";
     } finally {
       if (chat.isGroup) {
         if (typingIndicator) {
@@ -9975,6 +9976,8 @@ ${contextSummary}
     const chatInput = $("chat-input");
 
     const sendMessage = async () => {
+      document.getElementById("retry-btn").style.display = "none";
+
       const content = chatInput.value.trim();
       if (!content || !state.activeChatId) return;
 
@@ -10011,6 +10014,23 @@ ${contextSummary}
       chatInput.style.height = chatInput.scrollHeight + "px";
     });
 
+    document.getElementById("retry-btn").addEventListener("click", async () => {
+      if (!state.activeChatId) return;
+      const chat = state.chats[state.activeChatId];
+
+      // 1. 移除历史记录中的最后一条错误消息
+      chat.history.pop();
+      await db.chats.put(chat);
+
+      // 2. 重新渲染界面，清除错误气泡
+      renderChatInterface(state.activeChatId);
+
+      // 3. 隐藏重试按钮
+      document.getElementById("retry-btn").style.display = "none";
+
+      // 4. 重新触发API请求
+      triggerAiResponse();
+    });
     // ==================== 壁纸上传 ====================
     $("wallpaper-upload-input").addEventListener("change", async (e) => {
       const file = e.target.files[0];
