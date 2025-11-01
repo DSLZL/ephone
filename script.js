@@ -766,8 +766,8 @@ document.addEventListener("DOMContentLoaded", () => {
           : `<img src="${post.imageUrl}" class="chat-image">`;
       } else if (post.type === "text_image") {
         contentHtml = publicTextHtml
-          ? `${publicTextHtml}<div style="margin-top:10px;"><img src=" img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}"></div>`
-          : `<img src=" img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}">`;
+          ? `${publicTextHtml}<div style="margin-top:10px;"><img src="img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}"></div>`
+          : `<img src="img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}">`;
       }
 
       let likesHtml = "";
@@ -930,8 +930,8 @@ document.addEventListener("DOMContentLoaded", () => {
             : `<img src="${post.imageUrl}" class="chat-image">`;
         } else if (post.type === "text_image") {
           contentHtml = publicTextHtml
-            ? `${publicTextHtml}<div style="margin-top:10px;"><img src=" img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}"></div>`
-            : `<img src=" img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}">`;
+            ? `${publicTextHtml}<div style="margin-top:10px;"><img src="img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}"></div>`
+            : `<img src="img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}">`;
         }
 
         // ▼▼▼ 新增/修改的代码开始 ▼▼▼
@@ -1345,8 +1345,8 @@ document.addEventListener("DOMContentLoaded", () => {
     state.qzoneSettings = qzoneSettings || {
       id: "main",
       nickname: "{{user}}",
-      avatar: "https://files.catbox.moe/q6z5fc.jpeg",
-      banner: "https://files.catbox.moe/r5heyt.gif",
+      avatar: "img/Avatar.jpeg",
+      banner: "img/Banner.gif",
     };
 
     // ▼▼▼ 【确保这一行在 Promise.all 之后，并使用解构赋值得到的 initialFavorites】 ▼▼▼
@@ -2288,7 +2288,7 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (msg.type === "user_photo" || msg.type === "ai_image") {
       bubble.classList.add("is-ai-image");
       const altText = msg.type === "user_photo" ? "用户描述的照片" : "AI生成的图片";
-      contentHtml = `<img src=" img/Ai-Generated-Image.jpg" class="ai-generated-image" alt="${altText}" data-description="${msg.content}">`;
+      contentHtml = `<img src="img/Ai-Generated-Image.jpg" class="ai-generated-image" alt="${altText}" data-description="${msg.content}">`;
     } else if (msg.type === "voice_message") {
       bubble.classList.add("is-voice-message");
 
@@ -2394,7 +2394,7 @@ document.addEventListener("DOMContentLoaded", () => {
       contentHtml = `
             <div class="waimai-card">
                 <div class="waimai-header">
-                    <img src="https://files.catbox.moe/mq179k.png" class="icon" alt="Meituan Icon">
+                    <img src="img/Waimai.png" class="icon" alt="Meituan Icon">
                     <div class="title-group">
                         <span class="brand">美团外卖</span><span class="separator">|</span><span>外卖美食</span>
                     </div>
@@ -2490,7 +2490,7 @@ document.addEventListener("DOMContentLoaded", () => {
       contentHtml = `
         <div class="red-packet-card ${cardClass}">
             <div class="rp-header">
-                <img src="https://files.catbox.moe/lo9xhc.png" class="rp-icon">
+                <img src="img/Red-Packet.png" class="rp-icon">
                 <span class="rp-greeting">${msg.greeting || "恭喜发财，大吉大利！"}</span>
             </div>
             <div class="rp-type">${typeText}</div>
