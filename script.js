@@ -5774,8 +5774,16 @@ ${contextSummaryForApproval}
     const chat = state.chats[chatId];
     if (!chat) return;
 
-    const { proxyUrl, apiKey, model } = state.apiConfig;
-    if (!proxyUrl || !apiKey || !model) return;
+    // ▼▼▼ 【核心修正】从这里开始 ▼▼▼
+    const activeConfigId = state.globalSettings.activeApiConfigId;
+    const activeConfig = state.apiConfigs.find((c) => c.id === activeConfigId);
+
+    if (!activeConfig || !activeConfig.url || !activeConfig.apiKey || !activeConfig.model) {
+      console.error(`后台活动失败: 角色 "${chat.name}" 无法找到有效的API配置。`);
+      return;
+    }
+    const { url: proxyUrl, apiKey, model } = activeConfig;
+    // ▲▲▲ 【核心修正】到这里结束 ▲▲▲
 
     const now = new Date();
     const currentTime = now.toLocaleTimeString("zh-CN", {
@@ -5804,7 +5812,6 @@ ${contextSummaryForApproval}
       )}...”。`;
     }
 
-    // ▼▼▼ 在这里添加下面的代码 ▼▼▼
     let worldBookContent = "";
     if (chat.settings.linkedWorldBookIds && chat.settings.linkedWorldBookIds.length > 0) {
       const linkedContents = chat.settings.linkedWorldBookIds
@@ -5820,7 +5827,6 @@ ${contextSummaryForApproval}
         worldBookContent = `\n\n# 核心世界观设定 (你必须严格遵守)\n${linkedContents}\n`;
       }
     }
-    // ▲▲▲ 添加结束 ▲▲▲
 
     const systemPrompt = `
 # 你的任务
@@ -5835,7 +5841,7 @@ ${contextSummaryForApproval}
 # 指令格式 (你的回复【必须】是包含一个对象的JSON数组):
 -   **发消息+更新状态**: \`[{"type": "update_status", "status_text": "正在做的事", "is_busy": true}, {"type": "text", "content": "你想对用户说的话..."}]\`
 -   **发说说**: \`[{"type": "qzone_post", "postType": "shuoshuo", "content": "动态的文字内容..."}]\`
-- **发布文字图**: \`{"type": "qzone_post", "postType": "text_image", "publicText": "(可选)动态的公开文字", "hiddenContent": "对于图片的具体描述..."}\`
+- **发布文字图**: \`[{"type": "qzone_post", "postType": "text_image", "publicText": "(可选)动态的公开文字", "hiddenContent": "对于图片的具体描述..."}]\`
 -   **评论**: \`[{"type": "qzone_comment", "postId": 123, "commentText": "你的评论内容"}]\`
 -   **点赞**: \`[{"type": "qzone_like", "postId": 456}]\`
 -   **打视频**: \`[{"type": "video_call_request"}]\`
@@ -5847,13 +5853,11 @@ ${worldBookContent} // <--【核心】在这里注入世界书内容
 -   **你们最后的对话摘要**: ${recentContextSummary}
 -   **【重要】最近的动态列表**: 这个列表会标注 **[你已点赞]** 或 **[你已评论]**。请**优先**与你**尚未互动过**的动态进行交流。`;
 
-    // 【核心修复】在这里构建 messagesPayload
     const messagesPayload = [];
     messagesPayload.push({ role: "system", content: systemPrompt });
 
     try {
       const allRecentPosts = await db.qzonePosts.orderBy("timestamp").reverse().limit(3).toArray();
-      // 【核心修改】在这里插入过滤步骤
       const visiblePosts = filterVisiblePostsForAI(allRecentPosts, chat);
 
       const aiName = chat.name;
@@ -5880,15 +5884,13 @@ ${worldBookContent} // <--【核心】在这里注入世界书内容
         dynamicContext = postsContext;
       }
 
-      // 【核心修复】将所有动态信息作为一条 user 消息发送
       messagesPayload.push({
         role: "user",
         content: `[系统指令：请根据你在 system prompt 中读到的规则和以下最新信息，开始你的独立行动。]\n${dynamicContext}`,
       });
 
-      console.log("正在为后台活动发送API请求，Payload:", JSON.stringify(messagesPayload, null, 2)); // 添加日志，方便调试
+      console.log("正在为后台活动发送API请求，Payload:", JSON.stringify(messagesPayload, null, 2));
 
-      // 发送请求
       let isGemini = proxyUrl === GEMINI_API_URL;
       let geminiConfig = toGeminiRequestData(
         model,
@@ -5917,7 +5919,6 @@ ${worldBookContent} // <--【核心】在这里注入世界书内容
         throw new Error(`API请求失败: ${response.status} - ${JSON.stringify(errorData)}`);
       }
       const data = await response.json();
-      // 检查是否有有效回复
       if (!data.choices || data.choices.length === 0 || !data.choices[0].message.content) {
         console.warn(`API为空回或格式不正确，角色 "${chat.name}" 的本次后台活动跳过。`);
         return;
@@ -5926,7 +5927,6 @@ ${worldBookContent} // <--【核心】在这里注入世界书内容
         isGemini ? data.candidates[0].content.parts[0].text : data.choices[0].message.content
       );
 
-      // 后续处理AI返回指令的逻辑保持不变...
       for (const action of responseArray) {
         if (!action) continue;
 
@@ -5945,7 +5945,6 @@ ${worldBookContent} // <--【核心】在这里注入世界书内容
           };
 
           chat.unreadCount = (chat.unreadCount || 0) + 1;
-          /* -- call routing patched -- */
           if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
             const scope = videoCallState.isActive ? "active" : "outgoing";
             if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
@@ -5969,7 +5968,7 @@ ${worldBookContent} // <--【核心】在这里注入世界书内容
             hiddenContent: action.hiddenContent || "",
             timestamp: Date.now(),
             authorId: chatId,
-            authorGroupId: chat.groupId, // 【核心新增】记录作者的分组ID
+            authorGroupId: chat.groupId,
             visibleGroupIds: null,
           };
           await db.qzonePosts.add(newPost);
@@ -7892,11 +7891,16 @@ ${videoCallState.preCallContext}
 
     await showCustomAlert("流程启动", `正在为角色“${chat.name}”准备好友申请...`);
 
-    const { proxyUrl, apiKey, model } = state.apiConfig;
-    if (!proxyUrl || !apiKey || !model) {
+    // ▼▼▼ 【核心修正】从这里开始 ▼▼▼
+    const activeConfigId = state.globalSettings.activeApiConfigId;
+    const activeConfig = state.apiConfigs.find((c) => c.id === activeConfigId);
+
+    if (!activeConfig || !activeConfig.url || !activeConfig.apiKey || !activeConfig.model) {
       await showCustomAlert("配置错误", "API设置不完整，无法继续。");
       return;
     }
+    const { url: proxyUrl, apiKey, model } = activeConfig;
+    // ▲▲▲ 【核心修正】到这里结束 ▲▲▲
 
     const contextSummary = chat.history
       .slice(-5)
@@ -7907,7 +7911,6 @@ ${videoCallState.preCallContext}
       })
       .join("\n");
 
-    // ▼▼▼ 在这里添加下面的代码 ▼▼▼
     let worldBookContent = "";
     if (chat.settings.linkedWorldBookIds && chat.settings.linkedWorldBookIds.length > 0) {
       const linkedContents = chat.settings.linkedWorldBookIds
@@ -7923,7 +7926,6 @@ ${videoCallState.preCallContext}
         worldBookContent = `\n\n# 核心世界观设定 (请参考)\n${linkedContents}\n`;
       }
     }
-    // ▲▲▲ 添加结束 ▲▲▲
 
     const systemPrompt = `
 # 你的任务
@@ -7970,18 +7972,13 @@ ${contextSummary}
 
       const data = await response.json();
 
-      // --- 【核心修正：在这里净化AI的回复】 ---
       let rawContent = isGemini
         ? data.candidates[0].content.parts[0].text
         : data.choices[0].message.content;
-      // 1. 移除头尾可能存在的 "```json" 和 "```"
       rawContent = rawContent.replace(/^```json\s*/, "").replace(/```$/, "");
-      // 2. 移除所有换行符和多余的空格，确保是一个干净的JSON字符串
       const cleanedContent = rawContent.trim();
 
-      // 3. 使用净化后的内容进行解析
       const responseObj = JSON.parse(cleanedContent);
-      // --- 【修正结束】 ---
 
       if (responseObj.decision === "apply" && responseObj.reason) {
         chat.relationship.status = "pending_user_approval";
@@ -9998,6 +9995,8 @@ ${contextSummary}
       chatInput.style.height = "auto";
       chatInput.focus();
       cancelReplyMode();
+
+      triggerAiResponse();
     };
 
     $("send-btn").addEventListener("click", sendMessage);
