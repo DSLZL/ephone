@@ -2,7 +2,7 @@
 
 // 缓存名称，当您想强制更新缓存时，请更改此版本号，例如 'dexie-cache-v2'
 const CACHE_NAME = "dexie-cache-v1";
-const DEXIE_URL = "https://unpkg.com/dexie/dist/dexie.js";
+const DEXIE_URL = "https://cdn.jsdelivr.net/npm/dexie/dist/dexie.min.js";
 
 // 1. 安装 Service Worker 并缓存 dexie.js
 self.addEventListener("install", (event) => {
