@@ -767,6 +767,62 @@
               <label style="font-weight: 500; color: var(--text-secondary)">App 图标设置</label>
             </div>
             <div id="icon-settings-grid"></div>
+            <hr style="width: 80%; opacity: 0.3; margin: 30px 0" />
+            <div style="width: 100%; text-align: left; margin-bottom: 15px">
+              <label style="font-weight: 500; color: var(--text-secondary)">手机外框颜色</label>
+            </div>
+            <div id="frame-color-presets">
+              <div
+                class="color-swatch"
+                data-color="#ffffff"
+                style="background-color: #ffffff"
+              ></div>
+              <div
+                class="color-swatch"
+                data-color="#f0f2f5"
+                style="background-color: #f0f2f5"
+              ></div>
+              <div
+                class="color-swatch"
+                data-color="#1f1f1f"
+                style="background-color: #1f1f1f"
+              ></div>
+              <div
+                class="color-swatch"
+                data-color="#ffc0cb"
+                style="background-color: #ffc0cb"
+              ></div>
+              <div
+                class="color-swatch"
+                data-color="#add8e6"
+                style="background-color: #add8e6"
+              ></div>
+            </div>
+            <div
+              id="custom-frame-color-group"
+              class="form-group"
+              style="margin-top: 15px; width: 100%"
+            >
+              <label for="custom-frame-color-input" style="font-size: 12px"
+                >或输入自定义颜色 (如: #RRGGBB)</label
+              >
+              <div style="display: flex; gap: 10px">
+                <input
+                  type="text"
+                  id="custom-frame-color-input"
+                  placeholder="#ffffff"
+                  style="flex-grow: 1; padding: 8px"
+                />
+                <button
+                  type="button"
+                  id="apply-custom-frame-color-btn"
+                  class="form-button-secondary"
+                  style="margin-top: 0; padding: 0 15px"
+                >
+                  应用
+                </button>
+              </div>
+            </div>
             <button
               type="button"
               class="form-button"

@@ -1332,6 +1332,7 @@ document.addEventListener("DOMContentLoaded", () => {
       blockCooldownHours: 1,
       appIcons: { ...DEFAULT_APP_ICONS }, // 【核心修改】确保appIcons存在并有默认值
       framelessOnMobile: false, // 【核心新增】默认不开启无边框模式
+      frameColor: "#ffffff", // 【核心新增】默认外框颜色
     };
     // 【核心修改】合并已保存的图标和默认图标，防止更新后旧数据丢失新图标
     state.globalSettings.appIcons = {
@@ -1960,6 +1961,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     // 【核心修改】在这里调用图标渲染函数
     renderIconSettings();
+
+    // 【核心新增】渲染外框颜色选择器状态
+    const frameColor = state.globalSettings.frameColor || "#ffffff";
+    const presetSwatches = document.querySelectorAll(".color-swatch");
+    let isPreset = false;
+    presetSwatches.forEach((swatch) => {
+      const isActive = swatch.dataset.color === frameColor;
+      swatch.classList.toggle("active", isActive);
+      if (isActive) isPreset = true;
+    });
+
+    const customInput = document.getElementById("custom-frame-color-input");
+    if (!isPreset) {
+      customInput.value = frameColor;
+    } else {
+      customInput.value = "";
+    }
   }
   // ▲▲▲ 替换结束 ▲▲▲
   window.renderWallpaperScreenProxy = renderWallpaperScreen;
@@ -1970,6 +1988,15 @@ document.addEventListener("DOMContentLoaded", () => {
     if (wallpaper && wallpaper.startsWith("data:image"))
       homeScreen.style.backgroundImage = `url(${wallpaper})`;
     else if (wallpaper) homeScreen.style.backgroundImage = wallpaper;
+  }
+
+  /**
+   * 【全新】应用手机外框颜色
+   * @param {string} [color] - 要应用的颜色，如果为空则使用 state 中的颜色
+   */
+  function applyFrameColor(color) {
+    const frameColor = color || state.globalSettings.frameColor || "#ffffff";
+    document.documentElement.style.setProperty("--frame-color", frameColor);
   }
 
   async function renderWorldBookScreen() {
@@ -9634,7 +9661,7 @@ ${contextSummary}
     // ==================== 时钟和界面初始化 ====================
     updateClock();
     setInterval(updateClock, 30000);
-    [applyGlobalWallpaper, initBatteryManager, applyAppIcons].forEach((fn) => fn());
+    [applyGlobalWallpaper, initBatteryManager, applyAppIcons, applyFrameColor].forEach((fn) => fn());
 
     // ==================== 应用图标点击事件 ====================
     $("app-grid").addEventListener("click", (e) => {
@@ -10036,6 +10063,30 @@ ${contextSummary}
       // 4. 重新触发API请求
       triggerAiResponse();
     });
+
+    // ==================== 外框颜色设置 ====================
+    document.getElementById("frame-color-presets").addEventListener("click", (e) => {
+      if (e.target.classList.contains("color-swatch")) {
+        const color = e.target.dataset.color;
+        state.globalSettings.frameColor = color;
+        applyFrameColor(color);
+        renderWallpaperScreen(); // 更新UI高亮
+      }
+    });
+
+    document.getElementById("apply-custom-frame-color-btn").addEventListener("click", () => {
+      const input = document.getElementById("custom-frame-color-input");
+      const color = input.value.trim();
+      // 简单的颜色格式验证
+      if (/^#([0-9a-f]{3}){1,2}$/i.test(color) || /rgb/i.test(color)) {
+        state.globalSettings.frameColor = color;
+        applyFrameColor(color);
+        renderWallpaperScreen(); // 更新UI高亮
+      } else {
+        alert("请输入有效的颜色格式 (例如: #FFF, #123456, rgb(10,20,30))");
+      }
+    });
+
     // ==================== 壁纸上传 ====================
     $("wallpaper-upload-input").addEventListener("change", async (e) => {
       const file = e.target.files[0];
