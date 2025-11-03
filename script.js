@@ -262,9 +262,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // 1) Frame mode: show decorative phone frame on tablet/desktop, hide on phones
   function applyFrameMode() {
     const isPhone = window.matchMedia("(max-width: 600px)").matches;
-    document.documentElement.classList.toggle("frameless", isPhone);
+    const shouldBeFrameless = isPhone && state.globalSettings.framelessOnMobile;
+    document.documentElement.classList.toggle("frameless", shouldBeFrameless);
   }
-  applyFrameMode();
   window.addEventListener("resize", applyFrameMode, { passive: true });
   /* visibility safeguard for streaming (patched) */
   document.addEventListener(
@@ -1331,6 +1331,7 @@ document.addEventListener("DOMContentLoaded", () => {
       backgroundActivityInterval: 60,
       blockCooldownHours: 1,
       appIcons: { ...DEFAULT_APP_ICONS }, // 【核心修改】确保appIcons存在并有默认值
+      framelessOnMobile: false, // 【核心新增】默认不开启无边框模式
     };
     // 【核心修改】合并已保存的图标和默认图标，防止更新后旧数据丢失新图标
     state.globalSettings.appIcons = {
@@ -1466,6 +1467,9 @@ document.addEventListener("DOMContentLoaded", () => {
       state.globalSettings.backgroundActivityInterval || 60;
     document.getElementById("block-cooldown-input").value =
       state.globalSettings.blockCooldownHours || 1;
+    // 【核心新增】渲染无边框模式开关的状态
+    document.getElementById("frameless-on-mobile-switch").checked =
+      state.globalSettings.framelessOnMobile || false;
 
     // 渲染API配置列表
     const listEl = document.getElementById("api-configs-list");
@@ -9618,6 +9622,8 @@ ${contextSummary}
     // ==================== 数据加载 ====================
     await loadAllDataFromDB();
 
+    applyFrameMode();
+
     const storedCount = parseInt(localStorage.getItem("unreadPostsCount")) || 0;
     updateUnreadIndicator(storedCount);
 
@@ -11924,6 +11930,15 @@ ${contextSummary}
 
     // ==================== 主题切换 ====================
     $("theme-toggle-switch")?.addEventListener("change", toggleTheme);
+
+    // 【核心新增】无边框模式开关事件
+    $("frameless-on-mobile-switch")?.addEventListener("change", async (e) => {
+      if (state.globalSettings) {
+        state.globalSettings.framelessOnMobile = e.target.checked;
+        await db.globalSettings.put(state.globalSettings);
+        applyFrameMode(); // 立即应用更改
+      }
+    });
 
     // ==================== 最终启动 ====================
     if (state.globalSettings.enableBackgroundActivity) {

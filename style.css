@@ -906,17 +906,24 @@ button.action-btn svg { width: 24px; height: 24px; }
 
 /* Phone (<=600px): frameless, fill screen */
 @media (max-width: 600px) {
-  html, body { padding: 0; background: #000; height: 100%; }
-  #phone-frame {
+  html.frameless,
+  .frameless body {
+    padding: 0;
+    background: #000;
+    height: 100%;
+  }
+  .frameless #phone-frame {
     display: contents; /* collapse decorative frame */
   }
-  #phone-screen {
+  .frameless #phone-screen {
     width: 100vw;
-    height: 100svh;  /* iOS Safari friendly viewport */
+    height: 100svh; /* iOS Safari friendly viewport */
     border: none;
     border-radius: 0;
   }
-  .notch { display: none; }
+  .frameless .notch {
+    display: none;
+  }
 }
 
 /* Utility: hide outline and tap highlight for iOS-like feel */
