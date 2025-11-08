@@ -7,13 +7,13 @@
       content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
 
-    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <link rel="apple-touch-icon" href="img/Touch-Icon.jpg" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-    <link rel="preconnect" href="https://unpkg.com" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <title>EPhone</title>
-    <script src="https://unpkg.com/dexie/dist/dexie.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/dexie/dist/dexie.min.js" defer></script>
     <link
       rel="preload"
       href="style.css"
@@ -198,6 +198,18 @@
                 style="width: 80px; text-align: center"
               />
             </div>
+            <div class="form-group form-group-flex" style="margin-top: 10px">
+              <label for="frameless-on-mobile-switch" style="margin-bottom: 0">
+                在手机端启用无边框模式
+                <p style="font-size: 12px; font-weight: normal; color: #999; margin-top: 5px">
+                  开启后，在移动设备上将隐藏手机外框以填充整个屏幕。
+                </p>
+              </label>
+              <label class="toggle-switch">
+                <input type="checkbox" id="frameless-on-mobile-switch" />
+                <span class="slider"></span>
+              </label>
+            </div>
 
             <hr style="margin: 20px 0; opacity: 0.3" />
 
@@ -266,16 +278,12 @@
             <div class="qzone-content">
               <div class="qzone-profile-header">
                 <div id="qzone-banner-container" class="qzone-banner-container">
-                  <img id="qzone-banner-img" src="https://files.catbox.moe/r5heyt.gif" alt="背景" />
+                  <img id="qzone-banner-img" src="img/Banner.gif" alt="背景" />
                   <input type="file" id="qzone-banner-input" accept="image/*" hidden />
                 </div>
                 <div class="qzone-user-info">
                   <div id="qzone-avatar-container" class="qzone-avatar-container">
-                    <img
-                      id="qzone-avatar-img"
-                      src="https://files.catbox.moe/q6z5fc.jpeg"
-                      alt="头像"
-                    />
+                    <img id="qzone-avatar-img" src="img/Avatar.jpeg" alt="头像" />
                     <input type="file" id="qzone-avatar-input" accept="image/*" hidden />
                   </div>
                   <span id="qzone-nickname">{{user}}</span>
@@ -639,6 +647,19 @@
                 <button type="button" id="wait-reply-btn" title="等待回复">
                   <img src="img/Wait-Reply.png" alt="等待回复" />
                 </button>
+                <button type="button" id="retry-btn" title="重试" style="display: none">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="white"
+                  >
+                    <path
+                      d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"
+                    />
+                  </svg>
+                </button>
                 <button type="button" id="send-btn" class="action-button">发送</button>
               </div>
             </div>
@@ -746,6 +767,62 @@
               <label style="font-weight: 500; color: var(--text-secondary)">App 图标设置</label>
             </div>
             <div id="icon-settings-grid"></div>
+            <hr style="width: 80%; opacity: 0.3; margin: 30px 0" />
+            <div style="width: 100%; text-align: left; margin-bottom: 15px">
+              <label style="font-weight: 500; color: var(--text-secondary)">手机外框颜色</label>
+            </div>
+            <div id="frame-color-presets">
+              <div
+                class="color-swatch"
+                data-color="#ffffff"
+                style="background-color: #ffffff"
+              ></div>
+              <div
+                class="color-swatch"
+                data-color="#f0f2f5"
+                style="background-color: #f0f2f5"
+              ></div>
+              <div
+                class="color-swatch"
+                data-color="#1f1f1f"
+                style="background-color: #1f1f1f"
+              ></div>
+              <div
+                class="color-swatch"
+                data-color="#ffc0cb"
+                style="background-color: #ffc0cb"
+              ></div>
+              <div
+                class="color-swatch"
+                data-color="#add8e6"
+                style="background-color: #add8e6"
+              ></div>
+            </div>
+            <div
+              id="custom-frame-color-group"
+              class="form-group"
+              style="margin-top: 15px; width: 100%"
+            >
+              <label for="custom-frame-color-input" style="font-size: 12px"
+                >或输入自定义颜色 (如: #RRGGBB)</label
+              >
+              <div style="display: flex; gap: 10px">
+                <input
+                  type="text"
+                  id="custom-frame-color-input"
+                  placeholder="#ffffff"
+                  style="flex-grow: 1; padding: 8px"
+                />
+                <button
+                  type="button"
+                  id="apply-custom-frame-color-btn"
+                  class="form-button-secondary"
+                  style="margin-top: 0; padding: 0 15px"
+                >
+                  应用
+                </button>
+              </div>
+            </div>
             <button
               type="button"
               class="form-button"
@@ -1824,5 +1901,8 @@
       </div>
     </div>
     <script src="script.js"></script>
+
+    <div id="update-notification">应用有新版本可用，请 <a id="reload-page">刷新</a> 更新。</div>
+    <script src="sw-register.js" defer></script>
   </body>
 </html>

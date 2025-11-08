@@ -262,19 +262,23 @@ document.addEventListener("DOMContentLoaded", () => {
   // 1) Frame mode: show decorative phone frame on tablet/desktop, hide on phones
   function applyFrameMode() {
     const isPhone = window.matchMedia("(max-width: 600px)").matches;
-    document.documentElement.classList.toggle("frameless", isPhone);
+    const shouldBeFrameless = isPhone && state.globalSettings.framelessOnMobile;
+    document.documentElement.classList.toggle("frameless", shouldBeFrameless);
   }
-  applyFrameMode();
   window.addEventListener("resize", applyFrameMode, { passive: true });
   /* visibility safeguard for streaming (patched) */
-  document.addEventListener("visibilitychange", async () => {
-    if (document.hidden) {
-      try {
-        // flush any in-flight streaming content
-        await db?.chats?.put?.(state.chats[state.activeChatId]);
-      } catch(e){}
-    }
-  }, { passive: true });
+  document.addEventListener(
+    "visibilitychange",
+    async () => {
+      if (document.hidden) {
+        try {
+          // flush any in-flight streaming content
+          await db?.chats?.put?.(state.chats[state.activeChatId]);
+        } catch (e) {}
+      }
+    },
+    { passive: true }
+  );
 
   // 2) Default all images to lazy & async decoding (static + dynamically added)
   function setImagePerfAttrs(img) {
@@ -286,10 +290,12 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("img").forEach(setImagePerfAttrs);
   const mo = new MutationObserver((mutations) => {
     for (const m of mutations) {
-      m.addedNodes && m.addedNodes.forEach((node) => {
-        if (node && node.tagName === "IMG") setImagePerfAttrs(node);
-        else if (node && node.querySelectorAll) node.querySelectorAll("img").forEach(setImagePerfAttrs);
-      });
+      m.addedNodes &&
+        m.addedNodes.forEach((node) => {
+          if (node && node.tagName === "IMG") setImagePerfAttrs(node);
+          else if (node && node.querySelectorAll)
+            node.querySelectorAll("img").forEach(setImagePerfAttrs);
+        });
     }
   });
   mo.observe(document.documentElement, { childList: true, subtree: true });
@@ -298,7 +304,7 @@ document.addEventListener("DOMContentLoaded", () => {
   (function () {
     const orig = EventTarget.prototype.addEventListener;
     const defaultPassive = { touchstart: true, touchmove: true, wheel: true };
-    EventTarget.prototype.addEventListener = function(type, listener, options) {
+    EventTarget.prototype.addEventListener = function (type, listener, options) {
       let opts = options;
       if (typeof options === "object" && options !== null) {
         if (defaultPassive[type] && options.passive == null) {
@@ -373,31 +379,33 @@ document.addEventListener("DOMContentLoaded", () => {
   const defaultGroupMemberAvatar = "img/GroupMemberAvatar.jpg";
   const defaultGroupAvatar = "img/GroupAvatar.jpg";
 
-// === Contact Picker Helpers (patched) ===
-function getNameInitial(name) {
-  if (!name) return "#";
-  const ch = name.trim()[0].toUpperCase();
-  return ch >= "A" && ch <= "Z" ? ch : "#";
-}
-
-function groupContactsByInitial(contacts) {
-  const groups = new Map();
-  contacts.forEach(c => {
-    const letter = getNameInitial(c.name);
-    if (!groups.has(letter)) groups.set(letter, []);
-    groups.get(letter).push(c);
-  });
-  // sort each group by locale compare
-  for (const arr of groups.values()) {
-    arr.sort((a,b)=>a.name.localeCompare(b.name, 'zh-CN'));
+  // === Contact Picker Helpers (patched) ===
+  function getNameInitial(name) {
+    if (!name) return "#";
+    const ch = name.trim()[0].toUpperCase();
+    return ch >= "A" && ch <= "Z" ? ch : "#";
   }
-  // produce ordered letters A-Z then #
-  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-  if (groups.has("#")) letters.push("#");
-  const ordered = [];
-  letters.forEach(l => { if (groups.has(l)) ordered.push([l, groups.get(l)]); });
-  return ordered;
-}
+
+  function groupContactsByInitial(contacts) {
+    const groups = new Map();
+    contacts.forEach((c) => {
+      const letter = getNameInitial(c.name);
+      if (!groups.has(letter)) groups.set(letter, []);
+      groups.get(letter).push(c);
+    });
+    // sort each group by locale compare
+    for (const arr of groups.values()) {
+      arr.sort((a, b) => a.name.localeCompare(b.name, "zh-CN"));
+    }
+    // produce ordered letters A-Z then #
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+    if (groups.has("#")) letters.push("#");
+    const ordered = [];
+    letters.forEach((l) => {
+      if (groups.has(l)) ordered.push([l, groups.get(l)]);
+    });
+    return ordered;
+  }
 
   let notificationTimeout;
 
@@ -758,8 +766,8 @@ function groupContactsByInitial(contacts) {
           : `<img src="${post.imageUrl}" class="chat-image">`;
       } else if (post.type === "text_image") {
         contentHtml = publicTextHtml
-          ? `${publicTextHtml}<div style="margin-top:10px;"><img src=" img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}"></div>`
-          : `<img src=" img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}">`;
+          ? `${publicTextHtml}<div style="margin-top:10px;"><img src="img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}"></div>`
+          : `<img src="img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}">`;
       }
 
       let likesHtml = "";
@@ -922,8 +930,8 @@ function groupContactsByInitial(contacts) {
             : `<img src="${post.imageUrl}" class="chat-image">`;
         } else if (post.type === "text_image") {
           contentHtml = publicTextHtml
-            ? `${publicTextHtml}<div style="margin-top:10px;"><img src=" img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}"></div>`
-            : `<img src=" img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}">`;
+            ? `${publicTextHtml}<div style="margin-top:10px;"><img src="img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}"></div>`
+            : `<img src="img/Ai-Generated-Image.jpg" class="chat-image" style="cursor: pointer;" data-hidden-text="${post.hiddenContent}">`;
         }
 
         // ▼▼▼ 新增/修改的代码开始 ▼▼▼
@@ -1145,29 +1153,31 @@ function groupContactsByInitial(contacts) {
           await table.clear();
         }
 
-        if (Array.isArray(data.chats)) await db.chats.bulkPut(data.chats);
-        if (Array.isArray(data.apiConfigs)) await db.apiConfigs.bulkPut(data.apiConfigs);
-        if (Array.isArray(data.worldBooks)) await db.worldBooks.bulkPut(data.worldBooks);
+        // ▼▼▼ 核心修正：在 bulkPut 之前过滤掉所有无效数据（null 或 undefined） ▼▼▼
+        if (Array.isArray(data.chats)) await db.chats.bulkPut(data.chats.filter((item) => item));
+        if (Array.isArray(data.worldBooks))
+          await db.worldBooks.bulkPut(data.worldBooks.filter((item) => item));
         if (Array.isArray(data.worldBookCategories))
-          await db.worldBookCategories.bulkPut(data.worldBookCategories);
-        if (Array.isArray(data.userStickers)) await db.userStickers.bulkPut(data.userStickers);
+          await db.worldBookCategories.bulkPut(data.worldBookCategories.filter((item) => item));
+        if (Array.isArray(data.userStickers))
+          await db.userStickers.bulkPut(data.userStickers.filter((item) => item));
         if (Array.isArray(data.personaPresets))
-          await db.personaPresets.bulkPut(data.personaPresets);
-        if (Array.isArray(data.qzonePosts)) await db.qzonePosts.bulkPut(data.qzonePosts);
-        if (Array.isArray(data.qzoneAlbums)) await db.qzoneAlbums.bulkPut(data.qzoneAlbums);
-        if (Array.isArray(data.qzonePhotos)) await db.qzonePhotos.bulkPut(data.qzonePhotos);
-        if (Array.isArray(data.favorites)) await db.favorites.bulkPut(data.favorites);
-        if (Array.isArray(data.qzoneGroups)) await db.qzoneGroups.bulkPut(data.qzoneGroups);
-        if (Array.isArray(data.memories)) await db.memories.bulkPut(data.memories); // 【核心修正】新增
+          await db.personaPresets.bulkPut(data.personaPresets.filter((item) => item));
+        if (Array.isArray(data.qzonePosts))
+          await db.qzonePosts.bulkPut(data.qzonePosts.filter((item) => item));
+        if (Array.isArray(data.qzoneAlbums))
+          await db.qzoneAlbums.bulkPut(data.qzoneAlbums.filter((item) => item));
+        if (Array.isArray(data.qzonePhotos))
+          await db.qzonePhotos.bulkPut(data.qzonePhotos.filter((item) => item));
+        if (Array.isArray(data.favorites))
+          await db.favorites.bulkPut(data.favorites.filter((item) => item));
+        if (Array.isArray(data.qzoneGroups))
+          await db.qzoneGroups.bulkPut(data.qzoneGroups.filter((item) => item));
+        if (Array.isArray(data.memories))
+          await db.memories.bulkPut(data.memories.filter((item) => item));
+        // ▲▲▲ 修正结束 ▲▲▲
 
-        if (data.apiConfig) {
-          await db.apiConfigs.put({
-            name: "旧的默认配置",
-            url: data.apiConfig.proxyUrl,
-            apiKey: data.apiConfig.apiKey,
-            model: data.apiConfig.model,
-          });
-        }
+        if (data.apiConfig) await db.apiConfig.put(data.apiConfig);
         if (data.globalSettings) await db.globalSettings.put(data.globalSettings);
         if (data.musicLibrary) await db.musicLibrary.put(data.musicLibrary);
         if (data.qzoneSettings) await db.qzoneSettings.put(data.qzoneSettings);
@@ -1321,6 +1331,8 @@ function groupContactsByInitial(contacts) {
       backgroundActivityInterval: 60,
       blockCooldownHours: 1,
       appIcons: { ...DEFAULT_APP_ICONS }, // 【核心修改】确保appIcons存在并有默认值
+      framelessOnMobile: false, // 【核心新增】默认不开启无边框模式
+      frameColor: "#ffffff", // 【核心新增】默认外框颜色
     };
     // 【核心修改】合并已保存的图标和默认图标，防止更新后旧数据丢失新图标
     state.globalSettings.appIcons = {
@@ -1335,8 +1347,8 @@ function groupContactsByInitial(contacts) {
     state.qzoneSettings = qzoneSettings || {
       id: "main",
       nickname: "{{user}}",
-      avatar: "https://files.catbox.moe/q6z5fc.jpeg",
-      banner: "https://files.catbox.moe/r5heyt.gif",
+      avatar: "img/Avatar.jpeg",
+      banner: "img/Banner.gif",
     };
 
     // ▼▼▼ 【确保这一行在 Promise.all 之后，并使用解构赋值得到的 initialFavorites】 ▼▼▼
@@ -1456,6 +1468,9 @@ function groupContactsByInitial(contacts) {
       state.globalSettings.backgroundActivityInterval || 60;
     document.getElementById("block-cooldown-input").value =
       state.globalSettings.blockCooldownHours || 1;
+    // 【核心新增】渲染无边框模式开关的状态
+    document.getElementById("frameless-on-mobile-switch").checked =
+      state.globalSettings.framelessOnMobile || false;
 
     // 渲染API配置列表
     const listEl = document.getElementById("api-configs-list");
@@ -1487,48 +1502,48 @@ function groupContactsByInitial(contacts) {
       listEl.appendChild(item);
     });
   }
-// ▼▼▼ [新版本] 请使用此函数进行替换 ▼▼▼
-async function openApiConfigEditor(configId = null) {
-  let config = {
-    name: "",
-    url: "",
-    apiKey: "",
-    model: "gpt-4o",
-    enableStream: true,
-    hideStreamResponse: false,
-  };
-  if (configId) {
-    config = state.apiConfigs.find((c) => c.id === configId) || config;
+  // ▼▼▼ [新版本] 请使用此函数进行替换 ▼▼▼
+  async function openApiConfigEditor(configId = null) {
+    let config = {
+      name: "",
+      url: "",
+      apiKey: "",
+      model: "gpt-4o",
+      enableStream: true,
+      hideStreamResponse: false,
+    };
+    if (configId) {
+      config = state.apiConfigs.find((c) => c.id === configId) || config;
+    }
+
+    // 填充基本信息
+    document.getElementById("config-editor-id").value = configId || "";
+    document.getElementById("config-name-input").value = config.name;
+    document.getElementById("config-url-input").value = config.url;
+    document.getElementById("config-key-input").value = config.apiKey;
+
+    // --- 【核心修复】 ---
+    // 每次打开时，都重置模型下拉列表，只显示当前配置已保存的模型
+    const modelSelect = document.getElementById("config-model-select");
+    // 1. 清空所有旧的 <option> 元素
+    modelSelect.innerHTML = "";
+    // 2. 创建一个只包含当前已保存模型的新 <option>
+    const savedModelOption = document.createElement("option");
+    savedModelOption.value = config.model;
+    savedModelOption.textContent = config.model;
+    savedModelOption.selected = true;
+    // 3. 将这个唯一的选项添加到下拉列表中
+    modelSelect.appendChild(savedModelOption);
+    // --- 【修复结束】 ---
+
+    // 填充开关状态
+    document.getElementById("config-stream-switch").checked = config.enableStream;
+    document.getElementById("config-hide-stream-switch").checked = config.hideStreamResponse;
+
+    // 显示模态框
+    document.getElementById("api-config-editor-modal").classList.add("visible");
   }
-
-  // 填充基本信息
-  document.getElementById("config-editor-id").value = configId || "";
-  document.getElementById("config-name-input").value = config.name;
-  document.getElementById("config-url-input").value = config.url;
-  document.getElementById("config-key-input").value = config.apiKey;
-  
-  // --- 【核心修复】 ---
-  // 每次打开时，都重置模型下拉列表，只显示当前配置已保存的模型
-  const modelSelect = document.getElementById("config-model-select");
-  // 1. 清空所有旧的 <option> 元素
-  modelSelect.innerHTML = "";
-  // 2. 创建一个只包含当前已保存模型的新 <option>
-  const savedModelOption = document.createElement("option");
-  savedModelOption.value = config.model;
-  savedModelOption.textContent = config.model;
-  savedModelOption.selected = true;
-  // 3. 将这个唯一的选项添加到下拉列表中
-  modelSelect.appendChild(savedModelOption);
-  // --- 【修复结束】 ---
-
-  // 填充开关状态
-  document.getElementById("config-stream-switch").checked = config.enableStream;
-  document.getElementById("config-hide-stream-switch").checked = config.hideStreamResponse;
-
-  // 显示模态框
-  document.getElementById("api-config-editor-modal").classList.add("visible");
-}
-// ▲▲▲ 替换结束 ▲▲▲
+  // ▲▲▲ 替换结束 ▲▲▲
 
   async function saveApiConfig() {
     const id = document.getElementById("config-editor-id").value;
@@ -1946,6 +1961,23 @@ async function openApiConfigEditor(configId = null) {
     }
     // 【核心修改】在这里调用图标渲染函数
     renderIconSettings();
+
+    // 【核心新增】渲染外框颜色选择器状态
+    const frameColor = state.globalSettings.frameColor || "#ffffff";
+    const presetSwatches = document.querySelectorAll(".color-swatch");
+    let isPreset = false;
+    presetSwatches.forEach((swatch) => {
+      const isActive = swatch.dataset.color === frameColor;
+      swatch.classList.toggle("active", isActive);
+      if (isActive) isPreset = true;
+    });
+
+    const customInput = document.getElementById("custom-frame-color-input");
+    if (!isPreset) {
+      customInput.value = frameColor;
+    } else {
+      customInput.value = "";
+    }
   }
   // ▲▲▲ 替换结束 ▲▲▲
   window.renderWallpaperScreenProxy = renderWallpaperScreen;
@@ -1956,6 +1988,15 @@ async function openApiConfigEditor(configId = null) {
     if (wallpaper && wallpaper.startsWith("data:image"))
       homeScreen.style.backgroundImage = `url(${wallpaper})`;
     else if (wallpaper) homeScreen.style.backgroundImage = wallpaper;
+  }
+
+  /**
+   * 【全新】应用手机外框颜色
+   * @param {string} [color] - 要应用的颜色，如果为空则使用 state 中的颜色
+   */
+  function applyFrameColor(color) {
+    const frameColor = color || state.globalSettings.frameColor || "#ffffff";
+    document.documentElement.style.setProperty("--frame-color", frameColor);
   }
 
   async function renderWorldBookScreen() {
@@ -2278,7 +2319,7 @@ async function openApiConfigEditor(configId = null) {
     else if (msg.type === "user_photo" || msg.type === "ai_image") {
       bubble.classList.add("is-ai-image");
       const altText = msg.type === "user_photo" ? "用户描述的照片" : "AI生成的图片";
-      contentHtml = `<img src=" img/Ai-Generated-Image.jpg" class="ai-generated-image" alt="${altText}" data-description="${msg.content}">`;
+      contentHtml = `<img src="img/Ai-Generated-Image.jpg" class="ai-generated-image" alt="${altText}" data-description="${msg.content}">`;
     } else if (msg.type === "voice_message") {
       bubble.classList.add("is-voice-message");
 
@@ -2384,7 +2425,7 @@ async function openApiConfigEditor(configId = null) {
       contentHtml = `
             <div class="waimai-card">
                 <div class="waimai-header">
-                    <img src="https://files.catbox.moe/mq179k.png" class="icon" alt="Meituan Icon">
+                    <img src="img/Waimai.png" class="icon" alt="Meituan Icon">
                     <div class="title-group">
                         <span class="brand">美团外卖</span><span class="separator">|</span><span>外卖美食</span>
                     </div>
@@ -2480,7 +2521,7 @@ async function openApiConfigEditor(configId = null) {
       contentHtml = `
         <div class="red-packet-card ${cardClass}">
             <div class="rp-header">
-                <img src="https://files.catbox.moe/lo9xhc.png" class="rp-icon">
+                <img src="img/Red-Packet.png" class="rp-icon">
                 <span class="rp-greeting">${msg.greeting || "恭喜发财，大吉大利！"}</span>
             </div>
             <div class="rp-type">${typeText}</div>
@@ -2753,38 +2794,38 @@ async function openApiConfigEditor(configId = null) {
             timestamp: Date.now(),
           };
           /* -- call routing patched -- */
-if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
-  // When waiting for/inside a call, route assistant messages to call UI instead of chat
-  const scope = videoCallState.isActive ? "active" : "outgoing";
-  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
-    appendToCallFeed(aiMessage.content, scope);
-  }
-  // Also persist a compact record for history if you want (optional), but do not render as chat bubble now
-  aiMessage.isInCall = true;
-  /* -- call routing patched -- */
-if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
-  const scope = videoCallState.isActive ? "active" : "outgoing";
-  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
-    appendToCallFeed(aiMessage.content, scope);
-  }
-  aiMessage.isInCall = true;
-  chat.history.push(aiMessage);
-} else {
-  chat.history.push(aiMessage);
-}
-} else {
-  /* -- call routing patched -- */
-if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
-  const scope = videoCallState.isActive ? "active" : "outgoing";
-  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
-    appendToCallFeed(aiMessage.content, scope);
-  }
-  aiMessage.isInCall = true;
-  chat.history.push(aiMessage);
-} else {
-  chat.history.push(aiMessage);
-}
-}
+          if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
+            // When waiting for/inside a call, route assistant messages to call UI instead of chat
+            const scope = videoCallState.isActive ? "active" : "outgoing";
+            if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
+              appendToCallFeed(aiMessage.content, scope);
+            }
+            // Also persist a compact record for history if you want (optional), but do not render as chat bubble now
+            aiMessage.isInCall = true;
+            /* -- call routing patched -- */
+            if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
+              const scope = videoCallState.isActive ? "active" : "outgoing";
+              if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
+                appendToCallFeed(aiMessage.content, scope);
+              }
+              aiMessage.isInCall = true;
+              chat.history.push(aiMessage);
+            } else {
+              chat.history.push(aiMessage);
+            }
+          } else {
+            /* -- call routing patched -- */
+            if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
+              const scope = videoCallState.isActive ? "active" : "outgoing";
+              if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
+                appendToCallFeed(aiMessage.content, scope);
+              }
+              aiMessage.isInCall = true;
+              chat.history.push(aiMessage);
+            } else {
+              chat.history.push(aiMessage);
+            }
+          }
           await db.chats.put(chat);
           showScreen("chat-interface-screen");
           renderChatInterface(chatId);
@@ -3341,16 +3382,16 @@ if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingRespo
 
       if (aiMessage) {
         /* -- call routing patched -- */
-if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
-  const scope = videoCallState.isActive ? "active" : "outgoing";
-  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
-    appendToCallFeed(aiMessage.content, scope);
-  }
-  aiMessage.isInCall = true;
-  chat.history.push(aiMessage);
-} else {
-  chat.history.push(aiMessage);
-}
+        if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
+          const scope = videoCallState.isActive ? "active" : "outgoing";
+          if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
+            appendToCallFeed(aiMessage.content, scope);
+          }
+          aiMessage.isInCall = true;
+          chat.history.push(aiMessage);
+        } else {
+          chat.history.push(aiMessage);
+        }
         if (!isViewingThisChat && !notificationShown) {
           let notificationText;
           switch (aiMessage.type) {
@@ -4044,7 +4085,15 @@ ${contextSummaryForApproval}
                     fullResponseContent += delta;
                     aiMessagePlaceholder.content = fullResponseContent;
                     /* streaming autosave patched */
-                    if (!aiMessagePlaceholder._lastSave || Date.now()-aiMessagePlaceholder._lastSave>500) { try { await db.chats.put(chat); aiMessagePlaceholder._lastSave=Date.now(); } catch(e){} }
+                    if (
+                      !aiMessagePlaceholder._lastSave ||
+                      Date.now() - aiMessagePlaceholder._lastSave > 500
+                    ) {
+                      try {
+                        await db.chats.put(chat);
+                        aiMessagePlaceholder._lastSave = Date.now();
+                      } catch (e) {}
+                    }
                     contentElement.innerHTML = fullResponseContent
                       .replace(/```json\s*/, "")
                       .replace(/```$/, "")
@@ -4095,16 +4144,19 @@ ${contextSummaryForApproval}
                   timestamp: Date.now(),
                 };
                 /* -- call routing patched -- */
-if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
-  const scope = videoCallState.isActive ? "active" : "outgoing";
-  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
-    appendToCallFeed(aiMessage.content, scope);
-  }
-  aiMessage.isInCall = true;
-  chat.history.push(aiMessage);
-} else {
-  chat.history.push(aiMessage);
-}
+                if (
+                  videoCallState &&
+                  (videoCallState.isActive || videoCallState.isAwaitingResponse)
+                ) {
+                  const scope = videoCallState.isActive ? "active" : "outgoing";
+                  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
+                    appendToCallFeed(aiMessage.content, scope);
+                  }
+                  aiMessage.isInCall = true;
+                  chat.history.push(aiMessage);
+                } else {
+                  chat.history.push(aiMessage);
+                }
                 await db.chats.put(chat);
                 showScreen("chat-interface-screen");
                 renderChatInterface(chatId);
@@ -4674,16 +4726,19 @@ if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingRespo
 
             if (aiMessage) {
               /* -- call routing patched -- */
-if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
-  const scope = videoCallState.isActive ? "active" : "outgoing";
-  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
-    appendToCallFeed(aiMessage.content, scope);
-  }
-  aiMessage.isInCall = true;
-  chat.history.push(aiMessage);
-} else {
-  chat.history.push(aiMessage);
-}
+              if (
+                videoCallState &&
+                (videoCallState.isActive || videoCallState.isAwaitingResponse)
+              ) {
+                const scope = videoCallState.isActive ? "active" : "outgoing";
+                if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
+                  appendToCallFeed(aiMessage.content, scope);
+                }
+                aiMessage.isInCall = true;
+                chat.history.push(aiMessage);
+              } else {
+                chat.history.push(aiMessage);
+              }
               if (!isViewingThisChat && !notificationShown) {
                 let notificationText;
                 switch (aiMessage.type) {
@@ -4827,6 +4882,7 @@ if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingRespo
       ) {
         renderChatInterface(chatId);
       }
+      document.getElementById("retry-btn").style.display = "flex";
     } finally {
       if (chat.isGroup) {
         if (typingIndicator) {
@@ -5029,7 +5085,7 @@ if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingRespo
     const iconImg = document.querySelector("#listen-together-btn img");
     if (!iconImg) return;
     if (forceReset || !musicState.isActive || musicState.activeChatId !== chatId) {
-      iconImg.src = "img/.png";
+      iconImg.src = "img/Music.png";
       iconImg.className = "";
       return;
     }
@@ -5749,8 +5805,16 @@ if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingRespo
     const chat = state.chats[chatId];
     if (!chat) return;
 
-    const { proxyUrl, apiKey, model } = state.apiConfig;
-    if (!proxyUrl || !apiKey || !model) return;
+    // ▼▼▼ 【核心修正】从这里开始 ▼▼▼
+    const activeConfigId = state.globalSettings.activeApiConfigId;
+    const activeConfig = state.apiConfigs.find((c) => c.id === activeConfigId);
+
+    if (!activeConfig || !activeConfig.url || !activeConfig.apiKey || !activeConfig.model) {
+      console.error(`后台活动失败: 角色 "${chat.name}" 无法找到有效的API配置。`);
+      return;
+    }
+    const { url: proxyUrl, apiKey, model } = activeConfig;
+    // ▲▲▲ 【核心修正】到这里结束 ▲▲▲
 
     const now = new Date();
     const currentTime = now.toLocaleTimeString("zh-CN", {
@@ -5779,7 +5843,6 @@ if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingRespo
       )}...”。`;
     }
 
-    // ▼▼▼ 在这里添加下面的代码 ▼▼▼
     let worldBookContent = "";
     if (chat.settings.linkedWorldBookIds && chat.settings.linkedWorldBookIds.length > 0) {
       const linkedContents = chat.settings.linkedWorldBookIds
@@ -5795,7 +5858,6 @@ if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingRespo
         worldBookContent = `\n\n# 核心世界观设定 (你必须严格遵守)\n${linkedContents}\n`;
       }
     }
-    // ▲▲▲ 添加结束 ▲▲▲
 
     const systemPrompt = `
 # 你的任务
@@ -5810,7 +5872,7 @@ if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingRespo
 # 指令格式 (你的回复【必须】是包含一个对象的JSON数组):
 -   **发消息+更新状态**: \`[{"type": "update_status", "status_text": "正在做的事", "is_busy": true}, {"type": "text", "content": "你想对用户说的话..."}]\`
 -   **发说说**: \`[{"type": "qzone_post", "postType": "shuoshuo", "content": "动态的文字内容..."}]\`
-- **发布文字图**: \`{"type": "qzone_post", "postType": "text_image", "publicText": "(可选)动态的公开文字", "hiddenContent": "对于图片的具体描述..."}\`
+- **发布文字图**: \`[{"type": "qzone_post", "postType": "text_image", "publicText": "(可选)动态的公开文字", "hiddenContent": "对于图片的具体描述..."}]\`
 -   **评论**: \`[{"type": "qzone_comment", "postId": 123, "commentText": "你的评论内容"}]\`
 -   **点赞**: \`[{"type": "qzone_like", "postId": 456}]\`
 -   **打视频**: \`[{"type": "video_call_request"}]\`
@@ -5822,13 +5884,11 @@ ${worldBookContent} // <--【核心】在这里注入世界书内容
 -   **你们最后的对话摘要**: ${recentContextSummary}
 -   **【重要】最近的动态列表**: 这个列表会标注 **[你已点赞]** 或 **[你已评论]**。请**优先**与你**尚未互动过**的动态进行交流。`;
 
-    // 【核心修复】在这里构建 messagesPayload
     const messagesPayload = [];
     messagesPayload.push({ role: "system", content: systemPrompt });
 
     try {
       const allRecentPosts = await db.qzonePosts.orderBy("timestamp").reverse().limit(3).toArray();
-      // 【核心修改】在这里插入过滤步骤
       const visiblePosts = filterVisiblePostsForAI(allRecentPosts, chat);
 
       const aiName = chat.name;
@@ -5855,15 +5915,13 @@ ${worldBookContent} // <--【核心】在这里注入世界书内容
         dynamicContext = postsContext;
       }
 
-      // 【核心修复】将所有动态信息作为一条 user 消息发送
       messagesPayload.push({
         role: "user",
         content: `[系统指令：请根据你在 system prompt 中读到的规则和以下最新信息，开始你的独立行动。]\n${dynamicContext}`,
       });
 
-      console.log("正在为后台活动发送API请求，Payload:", JSON.stringify(messagesPayload, null, 2)); // 添加日志，方便调试
+      console.log("正在为后台活动发送API请求，Payload:", JSON.stringify(messagesPayload, null, 2));
 
-      // 发送请求
       let isGemini = proxyUrl === GEMINI_API_URL;
       let geminiConfig = toGeminiRequestData(
         model,
@@ -5892,7 +5950,6 @@ ${worldBookContent} // <--【核心】在这里注入世界书内容
         throw new Error(`API请求失败: ${response.status} - ${JSON.stringify(errorData)}`);
       }
       const data = await response.json();
-      // 检查是否有有效回复
       if (!data.choices || data.choices.length === 0 || !data.choices[0].message.content) {
         console.warn(`API为空回或格式不正确，角色 "${chat.name}" 的本次后台活动跳过。`);
         return;
@@ -5901,7 +5958,6 @@ ${worldBookContent} // <--【核心】在这里注入世界书内容
         isGemini ? data.candidates[0].content.parts[0].text : data.choices[0].message.content
       );
 
-      // 后续处理AI返回指令的逻辑保持不变...
       for (const action of responseArray) {
         if (!action) continue;
 
@@ -5920,17 +5976,16 @@ ${worldBookContent} // <--【核心】在这里注入世界书内容
           };
 
           chat.unreadCount = (chat.unreadCount || 0) + 1;
-          /* -- call routing patched -- */
-if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
-  const scope = videoCallState.isActive ? "active" : "outgoing";
-  if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
-    appendToCallFeed(aiMessage.content, scope);
-  }
-  aiMessage.isInCall = true;
-  chat.history.push(aiMessage);
-} else {
-  chat.history.push(aiMessage);
-}
+          if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingResponse)) {
+            const scope = videoCallState.isActive ? "active" : "outgoing";
+            if (aiMessage && typeof aiMessage.content === "string" && !aiMessage.type) {
+              appendToCallFeed(aiMessage.content, scope);
+            }
+            aiMessage.isInCall = true;
+            chat.history.push(aiMessage);
+          } else {
+            chat.history.push(aiMessage);
+          }
           await db.chats.put(chat);
           showNotification(chatId, aiMessage.content);
           renderChatList();
@@ -5944,7 +5999,7 @@ if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingRespo
             hiddenContent: action.hiddenContent || "",
             timestamp: Date.now(),
             authorId: chatId,
-            authorGroupId: chat.groupId, // 【核心新增】记录作者的分组ID
+            authorGroupId: chat.groupId,
             visibleGroupIds: null,
           };
           await db.qzonePosts.add(newPost);
@@ -6741,8 +6796,8 @@ if (videoCallState && (videoCallState.isActive || videoCallState.isAwaitingRespo
   /**
    * 渲染联系人选择列表
    */
-  
-// ▼▼▼ 请从这里开始，替换你文件中所有后续内容 ▼▼▼
+
+  // ▼▼▼ 请从这里开始，替换你文件中所有后续内容 ▼▼▼
 
   /**
    * 渲染联系人选择列表
@@ -7867,11 +7922,16 @@ ${videoCallState.preCallContext}
 
     await showCustomAlert("流程启动", `正在为角色“${chat.name}”准备好友申请...`);
 
-    const { proxyUrl, apiKey, model } = state.apiConfig;
-    if (!proxyUrl || !apiKey || !model) {
+    // ▼▼▼ 【核心修正】从这里开始 ▼▼▼
+    const activeConfigId = state.globalSettings.activeApiConfigId;
+    const activeConfig = state.apiConfigs.find((c) => c.id === activeConfigId);
+
+    if (!activeConfig || !activeConfig.url || !activeConfig.apiKey || !activeConfig.model) {
       await showCustomAlert("配置错误", "API设置不完整，无法继续。");
       return;
     }
+    const { url: proxyUrl, apiKey, model } = activeConfig;
+    // ▲▲▲ 【核心修正】到这里结束 ▲▲▲
 
     const contextSummary = chat.history
       .slice(-5)
@@ -7882,7 +7942,6 @@ ${videoCallState.preCallContext}
       })
       .join("\n");
 
-    // ▼▼▼ 在这里添加下面的代码 ▼▼▼
     let worldBookContent = "";
     if (chat.settings.linkedWorldBookIds && chat.settings.linkedWorldBookIds.length > 0) {
       const linkedContents = chat.settings.linkedWorldBookIds
@@ -7898,7 +7957,6 @@ ${videoCallState.preCallContext}
         worldBookContent = `\n\n# 核心世界观设定 (请参考)\n${linkedContents}\n`;
       }
     }
-    // ▲▲▲ 添加结束 ▲▲▲
 
     const systemPrompt = `
 # 你的任务
@@ -7945,18 +8003,13 @@ ${contextSummary}
 
       const data = await response.json();
 
-      // --- 【核心修正：在这里净化AI的回复】 ---
       let rawContent = isGemini
         ? data.candidates[0].content.parts[0].text
         : data.choices[0].message.content;
-      // 1. 移除头尾可能存在的 "```json" 和 "```"
       rawContent = rawContent.replace(/^```json\s*/, "").replace(/```$/, "");
-      // 2. 移除所有换行符和多余的空格，确保是一个干净的JSON字符串
       const cleanedContent = rawContent.trim();
 
-      // 3. 使用净化后的内容进行解析
       const responseObj = JSON.parse(cleanedContent);
-      // --- 【修正结束】 ---
 
       if (responseObj.decision === "apply" && responseObj.reason) {
         chat.relationship.status = "pending_user_approval";
@@ -9596,6 +9649,8 @@ ${contextSummary}
     // ==================== 数据加载 ====================
     await loadAllDataFromDB();
 
+    applyFrameMode();
+
     const storedCount = parseInt(localStorage.getItem("unreadPostsCount")) || 0;
     updateUnreadIndicator(storedCount);
 
@@ -9606,7 +9661,7 @@ ${contextSummary}
     // ==================== 时钟和界面初始化 ====================
     updateClock();
     setInterval(updateClock, 30000);
-    [applyGlobalWallpaper, initBatteryManager, applyAppIcons].forEach((fn) => fn());
+    [applyGlobalWallpaper, initBatteryManager, applyAppIcons, applyFrameColor].forEach((fn) => fn());
 
     // ==================== 应用图标点击事件 ====================
     $("app-grid").addEventListener("click", (e) => {
@@ -9951,6 +10006,8 @@ ${contextSummary}
     const chatInput = $("chat-input");
 
     const sendMessage = async () => {
+      document.getElementById("retry-btn").style.display = "none";
+
       const content = chatInput.value.trim();
       if (!content || !state.activeChatId) return;
 
@@ -9971,6 +10028,8 @@ ${contextSummary}
       chatInput.style.height = "auto";
       chatInput.focus();
       cancelReplyMode();
+
+      triggerAiResponse();
     };
 
     $("send-btn").addEventListener("click", sendMessage);
@@ -9985,6 +10044,47 @@ ${contextSummary}
     chatInput.addEventListener("input", () => {
       chatInput.style.height = "auto";
       chatInput.style.height = chatInput.scrollHeight + "px";
+    });
+
+    document.getElementById("retry-btn").addEventListener("click", async () => {
+      if (!state.activeChatId) return;
+      const chat = state.chats[state.activeChatId];
+
+      // 1. 移除历史记录中的最后一条错误消息
+      chat.history.pop();
+      await db.chats.put(chat);
+
+      // 2. 重新渲染界面，清除错误气泡
+      renderChatInterface(state.activeChatId);
+
+      // 3. 隐藏重试按钮
+      document.getElementById("retry-btn").style.display = "none";
+
+      // 4. 重新触发API请求
+      triggerAiResponse();
+    });
+
+    // ==================== 外框颜色设置 ====================
+    document.getElementById("frame-color-presets").addEventListener("click", (e) => {
+      if (e.target.classList.contains("color-swatch")) {
+        const color = e.target.dataset.color;
+        state.globalSettings.frameColor = color;
+        applyFrameColor(color);
+        renderWallpaperScreen(); // 更新UI高亮
+      }
+    });
+
+    document.getElementById("apply-custom-frame-color-btn").addEventListener("click", () => {
+      const input = document.getElementById("custom-frame-color-input");
+      const color = input.value.trim();
+      // 简单的颜色格式验证
+      if (/^#([0-9a-f]{3}){1,2}$/i.test(color) || /rgb/i.test(color)) {
+        state.globalSettings.frameColor = color;
+        applyFrameColor(color);
+        renderWallpaperScreen(); // 更新UI高亮
+      } else {
+        alert("请输入有效的颜色格式 (例如: #FFF, #123456, rgb(10,20,30))");
+      }
     });
 
     // ==================== 壁纸上传 ====================
@@ -11882,6 +11982,15 @@ ${contextSummary}
     // ==================== 主题切换 ====================
     $("theme-toggle-switch")?.addEventListener("change", toggleTheme);
 
+    // 【核心新增】无边框模式开关事件
+    $("frameless-on-mobile-switch")?.addEventListener("change", async (e) => {
+      if (state.globalSettings) {
+        state.globalSettings.framelessOnMobile = e.target.checked;
+        await db.globalSettings.put(state.globalSettings);
+        applyFrameMode(); // 立即应用更改
+      }
+    });
+
     // ==================== 最终启动 ====================
     if (state.globalSettings.enableBackgroundActivity) {
       startBackgroundSimulation();
@@ -11895,6 +12004,8 @@ ${contextSummary}
 });
 
 // Ensure renderChatListProxy is wired
-if (typeof renderChatList === 'function') { window.renderChatListProxy = renderChatList; }
+if (typeof renderChatList === "function") {
+  window.renderChatListProxy = renderChatList;
+}
 
 // ▲▲▲ 替换到文件末尾结束 ▲▲▲
